@@ -10,7 +10,10 @@ import 'package:endgame_mastery/features/lessons/session/lesson_stage.dart';
 import 'package:flutter/material.dart';
 
 class LessonExperienceScreen extends StatefulWidget {
-  const LessonExperienceScreen({super.key, this.board});
+  const LessonExperienceScreen({
+    super.key,
+    this.board,
+  });
 
   /// Test seam only.
   ///
@@ -18,25 +21,38 @@ class LessonExperienceScreen extends StatefulWidget {
   final Widget? board;
 
   @override
-  State<LessonExperienceScreen> createState() => _LessonExperienceScreenState();
+  State<LessonExperienceScreen> createState() =>
+      _LessonExperienceScreenState();
 }
 
-class _LessonExperienceScreenState extends State<LessonExperienceScreen> {
-  static const LessonExperienceBuilder _experienceBuilder =
+class _LessonExperienceScreenState
+    extends State<LessonExperienceScreen> {
+  static const LessonExperienceBuilder
+      _experienceBuilder =
       LessonExperienceBuilder();
 
-  static const LessonExperiencePresenter _presenter =
+  static const LessonExperiencePresenter
+      _presenter =
       LessonExperiencePresenter();
 
-  late final LessonSessionController _sessionController;
+  late final LessonSessionController
+      _sessionController;
+
+  late String _currentFen;
 
   @override
   void initState() {
     super.initState();
 
-    _sessionController = LessonSessionController(
-      initialState: LessonSessionState.initial(keySquaresLesson01),
+    _sessionController =
+        LessonSessionController(
+      initialState:
+          LessonSessionState.initial(
+        keySquaresLesson01,
+      ),
     );
+
+    _currentFen = keySquaresLesson01.fen;
   }
 
   void _startPractice() {
@@ -51,58 +67,108 @@ class _LessonExperienceScreenState extends State<LessonExperienceScreen> {
     setState(() {});
   }
 
+  void _onBoardFenChanged(String fen) {
+    if (_currentFen == fen) {
+      return;
+    }
+
+    setState(() {
+      _currentFen = fen;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
-    final experience = _experienceBuilder.build(
+    final experience =
+        _experienceBuilder.build(
       session: _sessionController.state,
-
-      // Live board FEN wiring belongs to Phase 5.3b.
-      currentFen: keySquaresLesson01.fen,
+      currentFen: _currentFen,
     );
 
-    final presentation = _presenter.present(experience);
+    final presentation =
+        _presenter.present(
+      experience,
+    );
 
     final board = IgnorePointer(
-      key: const ValueKey<String>('lesson-board-interaction-gate'),
-      ignoring: !presentation.boardInteractionEnabled,
+      key: const ValueKey<String>(
+        'lesson-board-interaction-gate',
+      ),
+      ignoring:
+          !presentation.boardInteractionEnabled,
       child:
           widget.board ??
           BoardScreen(
-            pedagogicalSquares: presentation.showLearnContent
-                ? experience.teaching.keySquares
-                : const <String>{},
+            pedagogicalSquares:
+                presentation.showLearnContent
+                    ? experience
+                        .teaching.keySquares
+                    : const <String>{},
+            onFenChanged:
+                _onBoardFenChanged,
           ),
     );
 
-    final showLearnPanel = presentation.showLearnContent;
+    final showLearnPanel =
+        presentation.showLearnContent;
 
-    final showPracticePanel = experience.stage == LessonStage.practice;
+    final showPracticePanel =
+        experience.stage ==
+        LessonStage.practice;
 
     return LayoutBuilder(
-      builder: (context, constraints) {
-        final wideLayout = constraints.maxWidth >= 900;
+      builder: (
+        context,
+        constraints,
+      ) {
+        final wideLayout =
+            constraints.maxWidth >= 900;
 
         if (wideLayout) {
           return ColoredBox(
-            color: const Color(0xFF171717),
+            color: const Color(
+              0xFF171717,
+            ),
             child: Row(
               children: [
-                Expanded(child: board),
+                Expanded(
+                  child: board,
+                ),
                 if (showLearnPanel)
                   SafeArea(
                     left: false,
                     child: SizedBox(
                       width: 440,
-                      child: SingleChildScrollView(
-                        padding: const EdgeInsets.fromLTRB(8, 20, 20, 20),
-                        child: LessonLearnPanel(
-                          lessonTitle: experience.lesson.title,
-                          objective: experience.lesson.objective,
-                          learnText: presentation.learnText ?? '',
+                      child:
+                          SingleChildScrollView(
+                        padding:
+                            const EdgeInsets
+                                .fromLTRB(
+                          8,
+                          20,
+                          20,
+                          20,
+                        ),
+                        child:
+                            LessonLearnPanel(
+                          lessonTitle:
+                              experience
+                                  .lesson
+                                  .title,
+                          objective:
+                              experience
+                                  .lesson
+                                  .objective,
+                          learnText:
+                              presentation
+                                      .learnText ??
+                                  '',
                           primaryActionLabel:
-                              presentation.primaryActionLabel ??
-                              'Start Practice',
-                          onPrimaryAction: _startPractice,
+                              presentation
+                                      .primaryActionLabel ??
+                                  'Start Practice',
+                          onPrimaryAction:
+                              _startPractice,
                         ),
                       ),
                     ),
@@ -112,14 +178,32 @@ class _LessonExperienceScreenState extends State<LessonExperienceScreen> {
                     left: false,
                     child: SizedBox(
                       width: 380,
-                      child: SingleChildScrollView(
-                        padding: const EdgeInsets.fromLTRB(8, 20, 20, 20),
-                        child: LessonPracticePanel(
-                          lessonTitle: experience.lesson.title,
-                          objective: experience.lesson.objective,
+                      child:
+                          SingleChildScrollView(
+                        padding:
+                            const EdgeInsets
+                                .fromLTRB(
+                          8,
+                          20,
+                          20,
+                          20,
+                        ),
+                        child:
+                            LessonPracticePanel(
+                          lessonTitle:
+                              experience
+                                  .lesson
+                                  .title,
+                          objective:
+                              experience
+                                  .lesson
+                                  .objective,
                           primaryActionLabel:
-                              presentation.primaryActionLabel ?? 'Start Prove',
-                          onPrimaryAction: _startProve,
+                              presentation
+                                      .primaryActionLabel ??
+                                  'Start Prove',
+                          onPrimaryAction:
+                              _startProve,
                         ),
                       ),
                     ),
@@ -131,31 +215,49 @@ class _LessonExperienceScreenState extends State<LessonExperienceScreen> {
 
         return Stack(
           children: [
-            Positioned.fill(child: board),
-
+            Positioned.fill(
+              child: board,
+            ),
             if (showLearnPanel)
               Positioned.fill(
                 child: ColoredBox(
-                  color: const Color(0xE8171717),
+                  color: const Color(
+                    0xE8171717,
+                  ),
                   child: SafeArea(
-                    child: SingleChildScrollView(
-                      padding: const EdgeInsets.all(12),
+                    child:
+                        SingleChildScrollView(
+                      padding:
+                          const EdgeInsets.all(
+                        12,
+                      ),
                       child: Center(
-                        child: LessonLearnPanel(
-                          lessonTitle: experience.lesson.title,
-                          objective: experience.lesson.objective,
-                          learnText: presentation.learnText ?? '',
+                        child:
+                            LessonLearnPanel(
+                          lessonTitle:
+                              experience
+                                  .lesson
+                                  .title,
+                          objective:
+                              experience
+                                  .lesson
+                                  .objective,
+                          learnText:
+                              presentation
+                                      .learnText ??
+                                  '',
                           primaryActionLabel:
-                              presentation.primaryActionLabel ??
-                              'Start Practice',
-                          onPrimaryAction: _startPractice,
+                              presentation
+                                      .primaryActionLabel ??
+                                  'Start Practice',
+                          onPrimaryAction:
+                              _startPractice,
                         ),
                       ),
                     ),
                   ),
                 ),
               ),
-
             if (showPracticePanel)
               Positioned(
                 left: 12,
@@ -164,12 +266,22 @@ class _LessonExperienceScreenState extends State<LessonExperienceScreen> {
                 child: SafeArea(
                   top: false,
                   child: Center(
-                    child: LessonPracticePanel(
-                      lessonTitle: experience.lesson.title,
-                      objective: experience.lesson.objective,
+                    child:
+                        LessonPracticePanel(
+                      lessonTitle:
+                          experience
+                              .lesson
+                              .title,
+                      objective:
+                          experience
+                              .lesson
+                              .objective,
                       primaryActionLabel:
-                          presentation.primaryActionLabel ?? 'Start Prove',
-                      onPrimaryAction: _startProve,
+                          presentation
+                                  .primaryActionLabel ??
+                              'Start Prove',
+                      onPrimaryAction:
+                          _startProve,
                     ),
                   ),
                 ),

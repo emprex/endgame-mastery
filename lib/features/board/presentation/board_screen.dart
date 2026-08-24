@@ -8,11 +8,17 @@ import 'package:endgame_mastery/features/board/presentation/chess_board.dart';
 import 'package:flutter/material.dart';
 
 class BoardScreen extends StatefulWidget {
-  const BoardScreen({super.key});
+  const BoardScreen({
+    super.key,
+    this.pedagogicalSquares = const <String>{},
+    this.onFenChanged,
+  });
+
+  final Set<String> pedagogicalSquares;
+  final ValueChanged<String>? onFenChanged;
 
   @override
-  State<BoardScreen> createState() =>
-      _BoardScreenState();
+  State<BoardScreen> createState() => _BoardScreenState();
 }
 
 class _BoardScreenState extends State<BoardScreen> {
@@ -20,15 +26,13 @@ class _BoardScreenState extends State<BoardScreen> {
   // CHESS POSITION
   // ---------------------------------------------------------------------------
 
-  final ChessController controller =
-      ChessController();
+  final ChessController controller = ChessController();
 
   // ---------------------------------------------------------------------------
   // ENGINE ORCHESTRATION
   // ---------------------------------------------------------------------------
 
-  late final GameEngineController
-      gameEngineController;
+  late final GameEngineController gameEngineController;
 
   bool engineReady = false;
 
@@ -42,8 +46,7 @@ class _BoardScreenState extends State<BoardScreen> {
 
   String? selectedSquare;
 
-  Set<String> legalTargets =
-      <String>{};
+  Set<String> legalTargets = <String>{};
 
   String? lastFrom;
 
@@ -59,15 +62,7 @@ class _BoardScreenState extends State<BoardScreen> {
   void initState() {
     super.initState();
 
-    // Temporary deterministic engine.
-    //
-    // This is NOT Stockfish yet.
-    //
-    // Its purpose is to validate the complete
-    // asynchronous UI/gameplay pipeline before
-    // replacing it with the real Stockfish adapter.
-    gameEngineController =
-        GameEngineController(
+    gameEngineController = GameEngineController(
       chessController: controller,
       engine: createChessEngine(),
       engineSide: EngineSide.black,
@@ -78,8 +73,7 @@ class _BoardScreenState extends State<BoardScreen> {
 
   Future<void> _initializeEngine() async {
     try {
-      await gameEngineController
-          .initialize();
+      await gameEngineController.initialize();
 
       if (!mounted) {
         return;
@@ -102,14 +96,17 @@ class _BoardScreenState extends State<BoardScreen> {
 
   @override
   void dispose() {
-    // dispose() itself cannot await.
-    //
-    // The GameEngineController still invalidates
-    // pending requests immediately before releasing
-    // the underlying engine.
     gameEngineController.dispose();
 
     super.dispose();
+  }
+
+  // ---------------------------------------------------------------------------
+  // LIVE POSITION
+  // ---------------------------------------------------------------------------
+
+  void _notifyFenChanged() {
+    widget.onFenChanged?.call(controller.fen);
   }
 
   // ---------------------------------------------------------------------------
@@ -139,8 +136,7 @@ class _BoardScreenState extends State<BoardScreen> {
   }
 
   void selectSquare(String square) {
-    if (promotionDialogOpen ||
-        interactionLocked) {
+    if (promotionDialogOpen || interactionLocked) {
       return;
     }
 
@@ -151,16 +147,12 @@ class _BoardScreenState extends State<BoardScreen> {
 
     setState(() {
       selectedSquare = square;
-      legalTargets =
-          controller.legalTargets(
-        square,
-      );
+      legalTargets = controller.legalTargets(square);
     });
   }
 
   void onSquareTap(String square) {
-    if (promotionDialogOpen ||
-        interactionLocked) {
+    if (promotionDialogOpen || interactionLocked) {
       return;
     }
 
@@ -194,36 +186,25 @@ class _BoardScreenState extends State<BoardScreen> {
     required String from,
     required String to,
   }) async {
-    if (promotionDialogOpen ||
-        interactionLocked) {
+    if (promotionDialogOpen || interactionLocked) {
       return;
     }
 
     String? promotion;
 
-    final needsPromotion =
-        controller.isPromotionMove(
+    final needsPromotion = controller.isPromotionMove(
       from: from,
       to: to,
     );
 
-    // -------------------------------------------------------------------------
-    // PROMOTION
-    // -------------------------------------------------------------------------
-
     if (needsPromotion) {
       promotionDialogOpen = true;
 
-      final piece =
-          controller.pieceVisualAt(
-        from,
-      );
+      final piece = controller.pieceVisualAt(from);
 
-      final isWhite =
-          piece?.isWhite ?? true;
+      final isWhite = piece?.isWhite ?? true;
 
-      promotion =
-          await _showPromotionDialog(
+      promotion = await _showPromotionDialog(
         isWhite: isWhite,
       );
 
@@ -235,13 +216,7 @@ class _BoardScreenState extends State<BoardScreen> {
       }
     }
 
-    // -------------------------------------------------------------------------
-    // APPLY USER MOVE IMMEDIATELY
-    // -------------------------------------------------------------------------
-
-    final moved =
-        gameEngineController
-            .playUserMove(
+    final moved = gameEngineController.playUserMove(
       from: from,
       to: to,
       promotion: promotion,
@@ -251,15 +226,6 @@ class _BoardScreenState extends State<BoardScreen> {
       return;
     }
 
-    // Important:
-    //
-    // We repaint BEFORE asking the engine to think.
-    //
-    // This gives us:
-    //
-    // User moves
-    // -> board updates immediately
-    // -> engine thinks afterwards.
     setState(() {
       lastFrom = from;
       lastTo = to;
@@ -270,65 +236,41 @@ class _BoardScreenState extends State<BoardScreen> {
       engineError = null;
     });
 
-    // User move may itself have ended the game.
+    _notifyFenChanged();
+
     if (controller.isGameOver()) {
       return;
     }
 
-    if (!gameEngineController
-        .isEngineTurn) {
+    if (!gameEngineController.isEngineTurn) {
       return;
     }
 
-    // Give Flutter one frame to render
-    // the user's move before engine work begins.
-    await WidgetsBinding
-        .instance.endOfFrame;
+    await WidgetsBinding.instance.endOfFrame;
 
     if (!mounted) {
       return;
     }
 
-    // -------------------------------------------------------------------------
-    // START ENGINE SEARCH
-    // -------------------------------------------------------------------------
-
     final engineFuture =
-        gameEngineController
-            .requestEngineMove();
+        gameEngineController.requestEngineMove();
 
-    // requestEngineMove() changes engineBusy
-    // synchronously before its first await.
-    //
-    // Rebuild immediately so the UI displays:
-    //
-    // "Stockfish thinking..."
-    //
-    // and locks user interaction.
     setState(() {});
 
     try {
-      final engineMoved =
-          await engineFuture;
+      final engineMoved = await engineFuture;
 
       if (!mounted) {
         return;
       }
 
       if (!engineMoved) {
-        // The search may have become stale because
-        // of reset/dispose/position revision.
         setState(() {});
         return;
       }
 
       final engineMove =
-          gameEngineController
-              .lastEngineMove;
-
-      // -----------------------------------------------------------------------
-      // DISPLAY ENGINE MOVE
-      // -----------------------------------------------------------------------
+          gameEngineController.lastEngineMove;
 
       setState(() {
         lastFrom = engineMove?.from;
@@ -336,15 +278,13 @@ class _BoardScreenState extends State<BoardScreen> {
 
         engineError = null;
       });
+
+      _notifyFenChanged();
     } catch (error) {
       if (!mounted) {
         return;
       }
 
-      // The UI stays alive even if the engine fails.
-      //
-      // Later we can turn this into a retry/action
-      // panel rather than merely a status message.
       setState(() {
         engineError = error;
       });
@@ -355,109 +295,71 @@ class _BoardScreenState extends State<BoardScreen> {
   // PROMOTION DIALOG
   // ---------------------------------------------------------------------------
 
-  Future<String?>
-      _showPromotionDialog({
+  Future<String?> _showPromotionDialog({
     required bool isWhite,
   }) {
     return showDialog<String>(
       context: context,
       barrierDismissible: false,
-      builder: (
-        BuildContext dialogContext,
-      ) {
+      builder: (BuildContext dialogContext) {
         return Dialog(
-          backgroundColor:
-              const Color(
-            0xFF2B2932,
-          ),
+          backgroundColor: const Color(0xFF2B2932),
           shape: RoundedRectangleBorder(
-            borderRadius:
-                BorderRadius.circular(
-              22,
-            ),
+            borderRadius: BorderRadius.circular(22),
           ),
           child: ConstrainedBox(
-            constraints:
-                const BoxConstraints(
+            constraints: const BoxConstraints(
               maxWidth: 420,
             ),
             child: Padding(
-              padding:
-                  const EdgeInsets.all(
-                20,
-              ),
+              padding: const EdgeInsets.all(20),
               child: Column(
-                mainAxisSize:
-                    MainAxisSize.min,
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   const Text(
                     'Choose promotion',
                     style: TextStyle(
                       fontSize: 21,
-                      fontWeight:
-                          FontWeight.w700,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
-                  const SizedBox(
-                    height: 18,
-                  ),
+                  const SizedBox(height: 18),
                   Wrap(
                     spacing: 10,
                     runSpacing: 10,
-                    alignment:
-                        WrapAlignment.center,
+                    alignment: WrapAlignment.center,
                     children: [
                       _promotionPieceButton(
-                        dialogContext:
-                            dialogContext,
+                        dialogContext: dialogContext,
                         value: 'q',
                         label: 'Queen',
                         piece: isWhite
-                            ? WhiteQueen(
-                                size: 54,
-                              )
-                            : BlackQueen(
-                                size: 54,
-                              ),
+                            ? WhiteQueen(size: 54)
+                            : BlackQueen(size: 54),
                       ),
                       _promotionPieceButton(
-                        dialogContext:
-                            dialogContext,
+                        dialogContext: dialogContext,
                         value: 'r',
                         label: 'Rook',
                         piece: isWhite
-                            ? WhiteRook(
-                                size: 54,
-                              )
-                            : BlackRook(
-                                size: 54,
-                              ),
+                            ? WhiteRook(size: 54)
+                            : BlackRook(size: 54),
                       ),
                       _promotionPieceButton(
-                        dialogContext:
-                            dialogContext,
+                        dialogContext: dialogContext,
                         value: 'b',
                         label: 'Bishop',
                         piece: isWhite
-                            ? WhiteBishop(
-                                size: 54,
-                              )
-                            : BlackBishop(
-                                size: 54,
-                              ),
+                            ? WhiteBishop(size: 54)
+                            : BlackBishop(size: 54),
                       ),
                       _promotionPieceButton(
-                        dialogContext:
-                            dialogContext,
+                        dialogContext: dialogContext,
                         value: 'n',
                         label: 'Knight',
                         piece: isWhite
-                            ? WhiteKnight(
-                                size: 54,
-                              )
-                            : BlackKnight(
-                                size: 54,
-                              ),
+                            ? WhiteKnight(size: 54)
+                            : BlackKnight(size: 54),
                       ),
                     ],
                   ),
@@ -471,8 +373,7 @@ class _BoardScreenState extends State<BoardScreen> {
   }
 
   Widget _promotionPieceButton({
-    required BuildContext
-        dialogContext,
+    required BuildContext dialogContext,
     required String value,
     required String label,
     required Widget piece,
@@ -481,45 +382,28 @@ class _BoardScreenState extends State<BoardScreen> {
       button: true,
       label: label,
       child: InkWell(
-        borderRadius:
-            BorderRadius.circular(
-          14,
-        ),
+        borderRadius: BorderRadius.circular(14),
         onTap: () {
-          Navigator.of(
-            dialogContext,
-          ).pop(
-            value,
-          );
+          Navigator.of(dialogContext).pop(value);
         },
         child: Container(
           width: 78,
           height: 88,
           decoration: BoxDecoration(
-            color:
-                const Color(
-              0xFF3A3742,
-            ),
-            borderRadius:
-                BorderRadius.circular(
-              14,
-            ),
+            color: const Color(0xFF3A3742),
+            borderRadius: BorderRadius.circular(14),
           ),
           child: Column(
             mainAxisAlignment:
                 MainAxisAlignment.center,
             children: [
               piece,
-              const SizedBox(
-                height: 3,
-              ),
+              const SizedBox(height: 3),
               Text(
                 label,
-                style:
-                    const TextStyle(
+                style: const TextStyle(
                   fontSize: 11,
-                  color:
-                      Colors.white70,
+                  color: Colors.white70,
                 ),
               ),
             ],
@@ -534,9 +418,6 @@ class _BoardScreenState extends State<BoardScreen> {
   // ---------------------------------------------------------------------------
 
   Future<void> resetGame() async {
-    // GameEngineController invalidates any
-    // pending engine request before resetting
-    // the chess position.
     await gameEngineController.reset();
 
     if (!mounted) {
@@ -554,6 +435,8 @@ class _BoardScreenState extends State<BoardScreen> {
 
       engineError = null;
     });
+
+    _notifyFenChanged();
   }
 
   // ---------------------------------------------------------------------------
@@ -579,8 +462,7 @@ class _BoardScreenState extends State<BoardScreen> {
   String _endSubtitle() {
     switch (controller.gameEndState()) {
       case GameEndState.checkmate:
-        return controller
-                .isWhiteToMove()
+        return controller.isWhiteToMove()
             ? 'Black wins'
             : 'White wins';
 
@@ -598,111 +480,73 @@ class _BoardScreenState extends State<BoardScreen> {
   Widget _gameOverOverlay() {
     return Positioned.fill(
       child: ColoredBox(
-        color:
-            Colors.black.withValues(
+        color: Colors.black.withValues(
           alpha: 0.58,
         ),
         child: Center(
           child: Container(
-            constraints:
-                const BoxConstraints(
+            constraints: const BoxConstraints(
               maxWidth: 310,
             ),
-            margin:
-                const EdgeInsets.all(
-              20,
-            ),
-            padding:
-                const EdgeInsets.fromLTRB(
+            margin: const EdgeInsets.all(20),
+            padding: const EdgeInsets.fromLTRB(
               24,
               22,
               24,
               20,
             ),
             decoration: BoxDecoration(
-              color:
-                  const Color(
-                0xFF26252B,
-              ),
+              color: const Color(0xFF26252B),
               borderRadius:
-                  BorderRadius.circular(
-                20,
-              ),
+                  BorderRadius.circular(20),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black
-                      .withValues(
+                  color: Colors.black.withValues(
                     alpha: 0.35,
                   ),
                   blurRadius: 24,
-                  offset:
-                      const Offset(
-                    0,
-                    8,
-                  ),
+                  offset: const Offset(0, 8),
                 ),
               ],
             ),
             child: Column(
-              mainAxisSize:
-                  MainAxisSize.min,
+              mainAxisSize: MainAxisSize.min,
               children: [
                 const Icon(
                   Icons.emoji_events,
                   size: 34,
-                  color:
-                      Color(
-                    0xFFE8C76A,
-                  ),
+                  color: Color(0xFFE8C76A),
                 ),
-                const SizedBox(
-                  height: 10,
-                ),
+                const SizedBox(height: 10),
                 Text(
                   _endTitle(),
-                  textAlign:
-                      TextAlign.center,
-                  style:
-                      const TextStyle(
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
                     fontSize: 23,
                     fontWeight:
                         FontWeight.w800,
-                    letterSpacing:
-                        1.1,
+                    letterSpacing: 1.1,
                   ),
                 ),
-                const SizedBox(
-                  height: 6,
-                ),
+                const SizedBox(height: 6),
                 Text(
                   _endSubtitle(),
-                  textAlign:
-                      TextAlign.center,
-                  style:
-                      const TextStyle(
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
                     fontSize: 15,
-                    color:
-                        Colors.white70,
+                    color: Colors.white70,
                   ),
                 ),
-                const SizedBox(
-                  height: 18,
-                ),
+                const SizedBox(height: 18),
                 SizedBox(
-                  width:
-                      double.infinity,
-                  child:
-                      FilledButton.icon(
-                    onPressed:
-                        resetGame,
-                    icon:
-                        const Icon(
+                  width: double.infinity,
+                  child: FilledButton.icon(
+                    onPressed: resetGame,
+                    icon: const Icon(
                       Icons.replay,
                     ),
                     label:
-                        const Text(
-                      'Play again',
-                    ),
+                        const Text('Play again'),
                   ),
                 ),
               ],
@@ -718,85 +562,50 @@ class _BoardScreenState extends State<BoardScreen> {
   // ---------------------------------------------------------------------------
 
   @override
-  Widget build(
-    BuildContext context,
-  ) {
-    final inCheck =
-        controller.isInCheck();
+  Widget build(BuildContext context) {
+    final inCheck = controller.isInCheck();
 
-    final gameOver =
-        controller.isGameOver();
-
-    // -------------------------------------------------------------------------
-    // STATUS MESSAGE
-    // -------------------------------------------------------------------------
-    //
-    // Priority:
-    //
-    // 1. Engine error
-    // 2. Engine initialization
-    // 3. Engine thinking
-    // 4. Normal chess position status
-    //
-    // Later this can become a richer coach/status component.
+    final gameOver = controller.isGameOver();
 
     final String statusText;
 
     if (engineError != null) {
-      statusText =
-          'Engine error';
+      statusText = 'Engine error';
     } else if (!engineReady) {
-      statusText =
-          'Preparing engine…';
-    } else if (gameEngineController
-        .engineBusy) {
-      statusText =
-          'Stockfish thinking…';
+      statusText = 'Preparing engine…';
+    } else if (gameEngineController.engineBusy) {
+      statusText = 'Stockfish thinking…';
     } else {
-      statusText =
-          controller.turnText();
+      statusText = controller.turnText();
     }
 
     return Scaffold(
       body: SafeArea(
         child: LayoutBuilder(
-          builder: (
-            context,
-            constraints,
-          ) {
+          builder: (context, constraints) {
             final bool compact =
-                constraints.maxWidth <
-                        700 ||
-                    constraints
-                            .maxHeight <
-                        760;
+                constraints.maxWidth < 700 ||
+                constraints.maxHeight < 760;
 
-            final double
-                horizontalPadding =
+            final double horizontalPadding =
                 compact ? 10 : 18;
 
-            final double
-                headerHeight =
+            final double headerHeight =
                 compact ? 78 : 104;
 
-            final double
-                controlsHeight =
+            final double controlsHeight =
                 compact ? 66 : 82;
 
-            final double
-                maxBoardWidth =
+            final double maxBoardWidth =
                 constraints.maxWidth -
-                    (horizontalPadding *
-                        2);
+                (horizontalPadding * 2);
 
-            final double
-                maxBoardHeight =
+            final double maxBoardHeight =
                 constraints.maxHeight -
-                    headerHeight -
-                    controlsHeight;
+                headerHeight -
+                controlsHeight;
 
-            final double boardSize =
-                math.max(
+            final double boardSize = math.max(
               240,
               math.min(
                 maxBoardWidth,
@@ -808,107 +617,66 @@ class _BoardScreenState extends State<BoardScreen> {
             );
 
             return Padding(
-              padding:
-                  EdgeInsets.symmetric(
-                horizontal:
-                    horizontalPadding,
+              padding: EdgeInsets.symmetric(
+                horizontal: horizontalPadding,
               ),
               child: Column(
                 children: [
                   SizedBox(
-                    height:
-                        compact
-                            ? 8
-                            : 14,
+                    height: compact ? 8 : 14,
                   ),
-
-                  // ------------------------------------------------------------
-                  // APP TITLE
-                  // ------------------------------------------------------------
-
                   Text(
                     'ENDGAME MASTERY',
                     style: TextStyle(
                       fontSize:
-                          compact
-                              ? 20
-                              : 26,
+                          compact ? 20 : 26,
                       fontWeight:
-                          FontWeight
-                              .w700,
+                          FontWeight.w700,
                       letterSpacing:
-                          compact
-                              ? 1.0
-                              : 1.4,
+                          compact ? 1.0 : 1.4,
                     ),
                   ),
-
-                  const SizedBox(
-                    height: 4,
-                  ),
-
-                  // ------------------------------------------------------------
-                  // GAME / ENGINE STATUS
-                  // ------------------------------------------------------------
-
+                  const SizedBox(height: 4),
                   Text(
                     statusText,
                     style: TextStyle(
                       fontSize:
-                          compact
-                              ? 13
-                              : 15,
-                      color:
-                          engineError !=
-                                  null
+                          compact ? 13 : 15,
+                      color: engineError != null
+                          ? const Color(
+                              0xFFFF8A80,
+                            )
+                          : gameOver
                               ? const Color(
-                                  0xFFFF8A80,
+                                  0xFFE8C76A,
                                 )
-                              : gameOver
+                              : inCheck
                                   ? const Color(
-                                      0xFFE8C76A,
+                                      0xFFFF8A80,
                                     )
-                                  : inCheck
+                                  : gameEngineController
+                                          .engineBusy
                                       ? const Color(
-                                          0xFFFF8A80,
+                                          0xFFE8C76A,
                                         )
-                                      : gameEngineController
-                                              .engineBusy
-                                          ? const Color(
-                                              0xFFE8C76A,
-                                            )
-                                          : Colors
-                                              .white70,
+                                      : Colors.white70,
                       fontWeight:
                           (inCheck ||
                                   gameOver ||
                                   gameEngineController
                                       .engineBusy)
-                              ? FontWeight
-                                  .w700
-                              : FontWeight
-                                  .w500,
+                              ? FontWeight.w700
+                              : FontWeight.w500,
                     ),
                   ),
-
                   SizedBox(
-                    height:
-                        compact
-                            ? 8
-                            : 16,
+                    height: compact ? 8 : 16,
                   ),
-
-                  // ------------------------------------------------------------
-                  // CHESS BOARD
-                  // ------------------------------------------------------------
-
                   Expanded(
                     child: Center(
                       child: SizedBox(
-                        width:
-                            boardSize,
-                        height:
-                            boardSize,
+                        width: boardSize,
+                        height: boardSize,
                         child: Stack(
                           children: [
                             ChessBoard(
@@ -918,26 +686,19 @@ class _BoardScreenState extends State<BoardScreen> {
                                   selectedSquare,
                               legalTargets:
                                   legalTargets,
-                              lastFrom:
-                                  lastFrom,
-                              lastTo:
-                                  lastTo,
+                              lastFrom: lastFrom,
+                              lastTo: lastTo,
                               checkedSquare:
                                   controller
                                       .checkedKingSquare(),
+                              pedagogicalSquares:
+                                  widget
+                                      .pedagogicalSquares,
                               pieceVisualAt:
                                   controller
                                       .pieceVisualAt,
-
-                              // Dragging is disabled while
-                              // the engine is thinking,
-                              // before initialization,
-                              // during engine's turn,
-                              // or after game over.
                               canDragPieceAt:
-                                  (
-                                square,
-                              ) {
+                                  (square) {
                                 if (interactionLocked) {
                                   return false;
                                 }
@@ -947,17 +708,13 @@ class _BoardScreenState extends State<BoardScreen> {
                                   square,
                                 );
                               },
-
                               onSquareTap:
                                   onSquareTap,
-
                               onPieceDragStart:
                                   selectSquare,
-
                               onPieceDropped:
                                   attemptMove,
                             ),
-
                             if (gameOver)
                               _gameOverOverlay(),
                           ],
@@ -965,32 +722,21 @@ class _BoardScreenState extends State<BoardScreen> {
                       ),
                     ),
                   ),
-
                   SizedBox(
-                    height:
-                        compact
-                            ? 8
-                            : 14,
+                    height: compact ? 8 : 14,
                   ),
-
-                  // ------------------------------------------------------------
-                  // BOARD CONTROLS
-                  // ------------------------------------------------------------
-
                   SafeArea(
                     top: false,
                     child: Padding(
                       padding:
-                          const EdgeInsets
-                              .only(
+                          const EdgeInsets.only(
                         bottom: 8,
                       ),
                       child: Wrap(
                         spacing: 10,
                         runSpacing: 8,
                         alignment:
-                            WrapAlignment
-                                .center,
+                            WrapAlignment.center,
                         children: [
                           FilledButton.icon(
                             onPressed: () {
@@ -999,27 +745,20 @@ class _BoardScreenState extends State<BoardScreen> {
                                     !whiteBottom;
                               });
                             },
-                            icon:
-                                const Icon(
+                            icon: const Icon(
                               Icons.flip,
                             ),
-                            label:
-                                const Text(
+                            label: const Text(
                               'Flip board',
                             ),
                           ),
                           OutlinedButton.icon(
-                            onPressed:
-                                resetGame,
-                            icon:
-                                const Icon(
-                              Icons
-                                  .restart_alt,
+                            onPressed: resetGame,
+                            icon: const Icon(
+                              Icons.restart_alt,
                             ),
                             label:
-                                const Text(
-                              'Reset',
-                            ),
+                                const Text('Reset'),
                           ),
                         ],
                       ),

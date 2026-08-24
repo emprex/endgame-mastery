@@ -14,14 +14,27 @@ void main() {
       expect(rule.forWhitePawn('e3'), <String>{'d5', 'e5', 'f5'});
     });
 
+    test('d5 produces six verified key squares', () {
+      expect(rule.forWhitePawn('d5'), <String>{
+        'c6',
+        'd6',
+        'e6',
+        'c7',
+        'd7',
+        'e7',
+      });
+    });
+
     test('rook pawn is intentionally unsupported', () {
       expect(rule.forWhitePawn('a4'), isEmpty);
-
       expect(rule.forWhitePawn('h4'), isEmpty);
+      expect(rule.forWhitePawn('a5'), isEmpty);
+      expect(rule.forWhitePawn('h5'), isEmpty);
     });
 
     test('unsupported later pawn rank returns no invented result', () {
-      expect(rule.forWhitePawn('d5'), isEmpty);
+      expect(rule.forWhitePawn('d6'), isEmpty);
+      expect(rule.forWhitePawn('d7'), isEmpty);
     });
 
     test('invalid square returns empty result', () {

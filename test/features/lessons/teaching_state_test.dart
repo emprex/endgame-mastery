@@ -11,6 +11,8 @@ void main() {
 
     const blackToMoveFen = '8/3k4/8/3K4/3P4/8/8/8 b - - 0 1';
 
+    const pawnOnD5Fen = '8/3k4/8/2KP4/8/8/8/8 b - - 0 1';
+
     test('White to move teaching state is a draw', () {
       final state = builder.build(
         lesson: keySquaresLesson01,
@@ -57,17 +59,27 @@ void main() {
       expect(whiteState.theoreticalResult, isNot(blackState.theoreticalResult));
     });
 
-    test('unknown position does not invent theoretical result', () {
-      const unknownFen = '8/3k4/8/2KP4/8/8/8/8 b - - 0 1';
+    test(
+      'live pawn advance to d5 updates key squares without inventing theory',
+      () {
+        final state = builder.build(
+          lesson: keySquaresLesson01,
+          fen: pawnOnD5Fen,
+        );
 
-      final state = builder.build(lesson: keySquaresLesson01, fen: unknownFen);
+        expect(state.sideToMove, ChessSide.black);
 
-      expect(state.theoreticalResult, isNull);
+        expect(state.keySquares, <String>{'c6', 'd6', 'e6', 'c7', 'd7', 'e7'});
 
-      expect(state.hasKnownTheoreticalResult, isFalse);
+        // Dynamic pedagogical geometry can be known even when this exact
+        // full position has no verified curriculum result attached to it.
+        expect(state.theoreticalResult, isNull);
 
-      expect(state.teachingPoint, isNull);
-    });
+        expect(state.hasKnownTheoreticalResult, isFalse);
+
+        expect(state.teachingPoint, isNull);
+      },
+    );
 
     test('malformed FEN is rejected before teaching state is built', () {
       expect(

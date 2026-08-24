@@ -1,12 +1,16 @@
 import 'package:endgame_mastery/core/chess/board_game_result.dart';
 import 'package:endgame_mastery/features/board/presentation/board_screen.dart';
+import 'package:endgame_mastery/features/lessons/data/pawn_endgame_hints.dart';
 import 'package:endgame_mastery/features/lessons/data/pawn_endgame_lessons.dart';
 import 'package:endgame_mastery/features/lessons/presentation/lesson_experience_presenter.dart';
 import 'package:endgame_mastery/features/lessons/presentation/widgets/lesson_completed_panel.dart';
 import 'package:endgame_mastery/features/lessons/presentation/widgets/lesson_learn_panel.dart';
 import 'package:endgame_mastery/features/lessons/presentation/widgets/lesson_practice_panel.dart';
+import 'package:endgame_mastery/features/lessons/presentation/widgets/lesson_prove_panel.dart';
 import 'package:endgame_mastery/features/lessons/presentation/widgets/lesson_result_panel.dart';
 import 'package:endgame_mastery/features/lessons/session/lesson_experience_builder.dart';
+import 'package:endgame_mastery/features/lessons/session/lesson_hint_controller.dart';
+import 'package:endgame_mastery/features/lessons/session/lesson_hint_overlay_policy.dart';
 import 'package:endgame_mastery/features/lessons/session/lesson_session_controller.dart';
 import 'package:endgame_mastery/features/lessons/session/lesson_session_outcome.dart';
 import 'package:endgame_mastery/features/lessons/session/lesson_session_state.dart';
@@ -16,9 +20,6 @@ import 'package:flutter/material.dart';
 class LessonExperienceScreen extends StatefulWidget {
   const LessonExperienceScreen({super.key, this.board});
 
-  /// Test seam only.
-  ///
-  /// Production uses the real BoardScreen.
   final Widget? board;
 
   @override
@@ -32,7 +33,11 @@ class _LessonExperienceScreenState extends State<LessonExperienceScreen> {
   static const LessonExperiencePresenter _presenter =
       LessonExperiencePresenter();
 
+  static const LessonHintOverlayPolicy _hintOverlayPolicy =
+      LessonHintOverlayPolicy();
+
   late final LessonSessionController _sessionController;
+  late final LessonHintController _hintController;
 
   late String _currentFen;
 
@@ -48,16 +53,20 @@ class _LessonExperienceScreenState extends State<LessonExperienceScreen> {
       initialState: LessonSessionState.initial(keySquaresLesson01),
     );
 
+    _hintController = LessonHintController(hints: keySquaresLesson01Hints);
+
     _currentFen = keySquaresLesson01.fen;
   }
 
   void _startPractice() {
+    _hintController.reset();
     _sessionController.startPractice();
 
     setState(() {});
   }
 
   void _startProve() {
+    _hintController.reset();
     _sessionController.startProve();
 
     setState(() {
@@ -65,6 +74,30 @@ class _LessonExperienceScreenState extends State<LessonExperienceScreen> {
       _proofFen = keySquaresLesson01.fen;
       _boardRevision++;
     });
+  }
+
+  void _requestHint() {
+    _hintController.revealNext();
+
+    setState(() {});
+  }
+
+  String? get _hintActionLabel {
+    return switch (_hintController.level) {
+      LessonHintLevel.none => 'Get a hint',
+      LessonHintLevel.concept => 'Show visual hint',
+      LessonHintLevel.visual => 'Show targeted hint',
+      LessonHintLevel.targeted => null,
+    };
+  }
+
+  String? get _hintProgressLabel {
+    return switch (_hintController.level) {
+      LessonHintLevel.none => null,
+      LessonHintLevel.concept => 'Hint 1 of 3',
+      LessonHintLevel.visual => 'Hint 2 of 3',
+      LessonHintLevel.targeted => 'Hint 3 of 3',
+    };
   }
 
   void _completeLesson() {
@@ -113,6 +146,13 @@ class _LessonExperienceScreenState extends State<LessonExperienceScreen> {
 
     final presentation = _presenter.present(experience);
 
+    final showHintKeySquares = _hintOverlayPolicy.showKeySquares(
+      _hintController.level,
+    );
+
+    final showPedagogicalSquares =
+        presentation.showLearnContent || showHintKeySquares;
+
     final board = IgnorePointer(
       key: const ValueKey<String>('lesson-board-interaction-gate'),
       ignoring: !presentation.boardInteractionEnabled,
@@ -120,7 +160,7 @@ class _LessonExperienceScreenState extends State<LessonExperienceScreen> {
           widget.board ??
           BoardScreen(
             key: ValueKey<int>(_boardRevision),
-            pedagogicalSquares: presentation.showLearnContent
+            pedagogicalSquares: showPedagogicalSquares
                 ? experience.teaching.keySquares
                 : const <String>{},
             onFenChanged: _onBoardFenChanged,
@@ -129,11 +169,9 @@ class _LessonExperienceScreenState extends State<LessonExperienceScreen> {
     );
 
     final showLearnPanel = presentation.showLearnContent;
-
     final showPracticePanel = experience.stage == LessonStage.practice;
-
+    final showProvePanel = experience.stage == LessonStage.prove;
     final showResultPanel = experience.stage == LessonStage.result;
-
     final showCompletedPanel = experience.stage == LessonStage.completed;
 
     Widget? sidePanel;
@@ -152,6 +190,19 @@ class _LessonExperienceScreenState extends State<LessonExperienceScreen> {
         objective: experience.lesson.objective,
         primaryActionLabel: presentation.primaryActionLabel ?? 'Start Prove',
         onPrimaryAction: _startProve,
+        hintText: _hintController.currentHint,
+        hintProgressLabel: _hintProgressLabel,
+        hintActionLabel: _hintActionLabel,
+        onHintRequested: _hintActionLabel == null ? null : _requestHint,
+      );
+    } else if (showProvePanel) {
+      sidePanel = LessonProvePanel(
+        stageLabel: presentation.stageLabel,
+        stageTitle: presentation.stageTitle,
+        hintText: _hintController.currentHint,
+        hintProgressLabel: _hintProgressLabel,
+        hintActionLabel: _hintActionLabel,
+        onHintRequested: _hintActionLabel == null ? null : _requestHint,
       );
     } else if (showResultPanel) {
       sidePanel = LessonResultPanel(
@@ -181,7 +232,7 @@ class _LessonExperienceScreenState extends State<LessonExperienceScreen> {
                   SafeArea(
                     left: false,
                     child: SizedBox(
-                      width: showPracticePanel ? 380 : 440,
+                      width: showPracticePanel || showProvePanel ? 380 : 440,
                       child: SingleChildScrollView(
                         padding: const EdgeInsets.fromLTRB(8, 20, 20, 20),
                         child: sidePanel,
@@ -196,7 +247,6 @@ class _LessonExperienceScreenState extends State<LessonExperienceScreen> {
         return Stack(
           children: [
             Positioned.fill(child: board),
-
             if (showLearnPanel)
               Positioned.fill(
                 child: ColoredBox(
@@ -209,7 +259,6 @@ class _LessonExperienceScreenState extends State<LessonExperienceScreen> {
                   ),
                 ),
               ),
-
             if (!showLearnPanel && sidePanel != null)
               Positioned(
                 left: 12,

@@ -1,22 +1,18 @@
 import 'package:flutter/material.dart';
 
-class LessonPracticePanel extends StatelessWidget {
-  const LessonPracticePanel({
+class LessonProvePanel extends StatelessWidget {
+  const LessonProvePanel({
     super.key,
-    required this.lessonTitle,
-    required this.objective,
-    required this.primaryActionLabel,
-    required this.onPrimaryAction,
+    required this.stageLabel,
+    required this.stageTitle,
     this.hintText,
     this.hintProgressLabel,
     this.hintActionLabel,
     this.onHintRequested,
   });
 
-  final String lessonTitle;
-  final String objective;
-  final String primaryActionLabel;
-  final VoidCallback onPrimaryAction;
+  final String stageLabel;
+  final String stageTitle;
 
   final String? hintText;
   final String? hintProgressLabel;
@@ -29,7 +25,7 @@ class LessonPracticePanel extends StatelessWidget {
 
     return Semantics(
       container: true,
-      label: 'Practice lesson',
+      label: 'Prove lesson',
       child: Container(
         width: double.infinity,
         constraints: const BoxConstraints(maxWidth: 440),
@@ -44,7 +40,7 @@ class LessonPracticePanel extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'PRACTICE',
+              stageLabel,
               style: theme.textTheme.labelLarge?.copyWith(
                 fontWeight: FontWeight.w800,
                 letterSpacing: 1.4,
@@ -53,23 +49,23 @@ class LessonPracticePanel extends StatelessWidget {
             ),
             const SizedBox(height: 7),
             Text(
-              lessonTitle,
+              stageTitle,
               style: theme.textTheme.titleLarge?.copyWith(
                 fontWeight: FontWeight.w800,
               ),
             ),
             const SizedBox(height: 12),
             Text(
-              objective,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                height: 1.4,
-                color: Colors.white.withValues(alpha: 0.82),
+              'Prove the theoretical result.',
+              style: theme.textTheme.bodyLarge?.copyWith(
+                fontWeight: FontWeight.w700,
+                color: Colors.white.withValues(alpha: 0.92),
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 8),
             Text(
-              'Explore the position on the board. '
-              'When you are ready to test your understanding, start the proof.',
+              'Play the position to its legitimate conclusion. '
+              'The proof ends only when the chess game ends.',
               style: theme.textTheme.bodyMedium?.copyWith(
                 height: 1.4,
                 color: Colors.white70,
@@ -122,14 +118,6 @@ class LessonPracticePanel extends StatelessWidget {
                 ),
               ),
             ],
-            const SizedBox(height: 18),
-            SizedBox(
-              width: double.infinity,
-              child: FilledButton(
-                onPressed: onPrimaryAction,
-                child: Text(primaryActionLabel),
-              ),
-            ),
           ],
         ),
       ),

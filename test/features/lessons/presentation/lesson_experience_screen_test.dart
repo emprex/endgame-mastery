@@ -120,15 +120,12 @@ void main() {
     });
 
     await tester.pumpWidget(buildScreen());
-
     await tester.pumpAndSettle();
 
     await tester.tap(find.text('Start Practice'));
-
     await tester.pumpAndSettle();
 
     expect(find.text('PRACTICE'), findsOneWidget);
-
     expect(find.text('Start Prove'), findsOneWidget);
 
     final gateDuringPractice = tester.widget<IgnorePointer>(
@@ -138,17 +135,39 @@ void main() {
     expect(gateDuringPractice.ignoring, isFalse);
 
     await tester.tap(find.text('Start Prove'));
-
     await tester.pumpAndSettle();
 
     expect(find.text('PRACTICE'), findsNothing);
-
     expect(find.text('Start Prove'), findsNothing);
+
+    expect(find.text('PROVE'), findsOneWidget);
+    expect(find.text('Prove it'), findsOneWidget);
+    expect(find.text('Prove the theoretical result.'), findsOneWidget);
+
+    expect(
+      find.text(
+        'Play the position to its legitimate conclusion. '
+        'The proof ends only when the chess game ends.',
+      ),
+      findsOneWidget,
+    );
 
     final gateDuringProve = tester.widget<IgnorePointer>(
       find.byKey(const ValueKey<String>('lesson-board-interaction-gate')),
     );
 
     expect(gateDuringProve.ignoring, isFalse);
+
+    // Hints are allowed during PROVE.
+    expect(
+      find.byKey(const ValueKey<String>('lesson-hint-button')),
+      findsOneWidget,
+    );
+
+    // But PROVE must still have no artificial completion action.
+    expect(find.text('Finish Proof'), findsNothing);
+    expect(find.text('Complete Proof'), findsNothing);
+    expect(find.text('Finish'), findsNothing);
+    expect(find.text('Continue'), findsNothing);
   });
 }

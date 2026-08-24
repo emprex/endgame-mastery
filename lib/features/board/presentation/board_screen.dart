@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:chess_vectors_flutter/chess_vectors_flutter.dart';
+import 'package:endgame_mastery/core/chess/board_game_result.dart';
 import 'package:endgame_mastery/core/chess/chess_controller.dart';
 import 'package:endgame_mastery/core/engine/engine_factory.dart';
 import 'package:endgame_mastery/core/game/game_engine_controller.dart';
@@ -12,51 +13,31 @@ class BoardScreen extends StatefulWidget {
     super.key,
     this.pedagogicalSquares = const <String>{},
     this.onFenChanged,
+    this.onGameEnded,
   });
 
   final Set<String> pedagogicalSquares;
   final ValueChanged<String>? onFenChanged;
+  final ValueChanged<BoardGameResult>? onGameEnded;
 
   @override
   State<BoardScreen> createState() => _BoardScreenState();
 }
 
 class _BoardScreenState extends State<BoardScreen> {
-  // ---------------------------------------------------------------------------
-  // CHESS POSITION
-  // ---------------------------------------------------------------------------
-
   final ChessController controller = ChessController();
-
-  // ---------------------------------------------------------------------------
-  // ENGINE ORCHESTRATION
-  // ---------------------------------------------------------------------------
 
   late final GameEngineController gameEngineController;
 
   bool engineReady = false;
-
   Object? engineError;
 
-  // ---------------------------------------------------------------------------
-  // BOARD UI STATE
-  // ---------------------------------------------------------------------------
-
   bool whiteBottom = true;
-
   String? selectedSquare;
-
   Set<String> legalTargets = <String>{};
-
   String? lastFrom;
-
   String? lastTo;
-
   bool promotionDialogOpen = false;
-
-  // ---------------------------------------------------------------------------
-  // LIFECYCLE
-  // ---------------------------------------------------------------------------
 
   @override
   void initState() {
@@ -97,21 +78,34 @@ class _BoardScreenState extends State<BoardScreen> {
   @override
   void dispose() {
     gameEngineController.dispose();
-
     super.dispose();
   }
-
-  // ---------------------------------------------------------------------------
-  // LIVE POSITION
-  // ---------------------------------------------------------------------------
 
   void _notifyFenChanged() {
     widget.onFenChanged?.call(controller.fen);
   }
 
-  // ---------------------------------------------------------------------------
-  // INTERACTION LOCK
-  // ---------------------------------------------------------------------------
+  void _notifyGameEndedIfNeeded() {
+    final endState = controller.gameEndState();
+
+    switch (endState) {
+      case GameEndState.none:
+        return;
+
+      case GameEndState.stalemate:
+      case GameEndState.draw:
+        widget.onGameEnded?.call(BoardGameResult.draw);
+        return;
+
+      case GameEndState.checkmate:
+        widget.onGameEnded?.call(
+          controller.isWhiteToMove()
+              ? BoardGameResult.blackWin
+              : BoardGameResult.whiteWin,
+        );
+        return;
+    }
+  }
 
   bool get interactionLocked {
     return !engineReady ||
@@ -119,10 +113,6 @@ class _BoardScreenState extends State<BoardScreen> {
         gameEngineController.isEngineTurn ||
         controller.isGameOver();
   }
-
-  // ---------------------------------------------------------------------------
-  // BOARD SELECTION
-  // ---------------------------------------------------------------------------
 
   void clearSelection() {
     if (!mounted) {
@@ -167,46 +157,29 @@ class _BoardScreenState extends State<BoardScreen> {
     }
 
     if (legalTargets.contains(square)) {
-      attemptMove(
-        from: selectedSquare!,
-        to: square,
-      );
-
+      attemptMove(from: selectedSquare!, to: square);
       return;
     }
 
     selectSquare(square);
   }
 
-  // ---------------------------------------------------------------------------
-  // USER MOVE -> ENGINE MOVE
-  // ---------------------------------------------------------------------------
-
-  Future<void> attemptMove({
-    required String from,
-    required String to,
-  }) async {
+  Future<void> attemptMove({required String from, required String to}) async {
     if (promotionDialogOpen || interactionLocked) {
       return;
     }
 
     String? promotion;
 
-    final needsPromotion = controller.isPromotionMove(
-      from: from,
-      to: to,
-    );
+    final needsPromotion = controller.isPromotionMove(from: from, to: to);
 
     if (needsPromotion) {
       promotionDialogOpen = true;
 
       final piece = controller.pieceVisualAt(from);
-
       final isWhite = piece?.isWhite ?? true;
 
-      promotion = await _showPromotionDialog(
-        isWhite: isWhite,
-      );
+      promotion = await _showPromotionDialog(isWhite: isWhite);
 
       promotionDialogOpen = false;
 
@@ -229,16 +202,15 @@ class _BoardScreenState extends State<BoardScreen> {
     setState(() {
       lastFrom = from;
       lastTo = to;
-
       selectedSquare = null;
       legalTargets = <String>{};
-
       engineError = null;
     });
 
     _notifyFenChanged();
 
     if (controller.isGameOver()) {
+      _notifyGameEndedIfNeeded();
       return;
     }
 
@@ -252,8 +224,7 @@ class _BoardScreenState extends State<BoardScreen> {
       return;
     }
 
-    final engineFuture =
-        gameEngineController.requestEngineMove();
+    final engineFuture = gameEngineController.requestEngineMove();
 
     setState(() {});
 
@@ -269,17 +240,16 @@ class _BoardScreenState extends State<BoardScreen> {
         return;
       }
 
-      final engineMove =
-          gameEngineController.lastEngineMove;
+      final engineMove = gameEngineController.lastEngineMove;
 
       setState(() {
         lastFrom = engineMove?.from;
         lastTo = engineMove?.to;
-
         engineError = null;
       });
 
       _notifyFenChanged();
+      _notifyGameEndedIfNeeded();
     } catch (error) {
       if (!mounted) {
         return;
@@ -291,13 +261,7 @@ class _BoardScreenState extends State<BoardScreen> {
     }
   }
 
-  // ---------------------------------------------------------------------------
-  // PROMOTION DIALOG
-  // ---------------------------------------------------------------------------
-
-  Future<String?> _showPromotionDialog({
-    required bool isWhite,
-  }) {
+  Future<String?> _showPromotionDialog({required bool isWhite}) {
     return showDialog<String>(
       context: context,
       barrierDismissible: false,
@@ -308,9 +272,7 @@ class _BoardScreenState extends State<BoardScreen> {
             borderRadius: BorderRadius.circular(22),
           ),
           child: ConstrainedBox(
-            constraints: const BoxConstraints(
-              maxWidth: 420,
-            ),
+            constraints: const BoxConstraints(maxWidth: 420),
             child: Padding(
               padding: const EdgeInsets.all(20),
               child: Column(
@@ -318,10 +280,7 @@ class _BoardScreenState extends State<BoardScreen> {
                 children: [
                   const Text(
                     'Choose promotion',
-                    style: TextStyle(
-                      fontSize: 21,
-                      fontWeight: FontWeight.w700,
-                    ),
+                    style: TextStyle(fontSize: 21, fontWeight: FontWeight.w700),
                   ),
                   const SizedBox(height: 18),
                   Wrap(
@@ -394,17 +353,13 @@ class _BoardScreenState extends State<BoardScreen> {
             borderRadius: BorderRadius.circular(14),
           ),
           child: Column(
-            mainAxisAlignment:
-                MainAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
               piece,
               const SizedBox(height: 3),
               Text(
                 label,
-                style: const TextStyle(
-                  fontSize: 11,
-                  color: Colors.white70,
-                ),
+                style: const TextStyle(fontSize: 11, color: Colors.white70),
               ),
             ],
           ),
@@ -412,10 +367,6 @@ class _BoardScreenState extends State<BoardScreen> {
       ),
     );
   }
-
-  // ---------------------------------------------------------------------------
-  // RESET
-  // ---------------------------------------------------------------------------
 
   Future<void> resetGame() async {
     await gameEngineController.reset();
@@ -427,33 +378,23 @@ class _BoardScreenState extends State<BoardScreen> {
     setState(() {
       selectedSquare = null;
       legalTargets = <String>{};
-
       lastFrom = null;
       lastTo = null;
-
       promotionDialogOpen = false;
-
       engineError = null;
     });
 
     _notifyFenChanged();
   }
 
-  // ---------------------------------------------------------------------------
-  // GAME END PRESENTATION
-  // ---------------------------------------------------------------------------
-
   String _endTitle() {
     switch (controller.gameEndState()) {
       case GameEndState.checkmate:
         return 'CHECKMATE';
-
       case GameEndState.stalemate:
         return 'STALEMATE';
-
       case GameEndState.draw:
         return 'DRAW';
-
       case GameEndState.none:
         return '';
     }
@@ -462,16 +403,11 @@ class _BoardScreenState extends State<BoardScreen> {
   String _endSubtitle() {
     switch (controller.gameEndState()) {
       case GameEndState.checkmate:
-        return controller.isWhiteToMove()
-            ? 'Black wins'
-            : 'White wins';
-
+        return controller.isWhiteToMove() ? 'Black wins' : 'White wins';
       case GameEndState.stalemate:
         return 'No legal moves';
-
       case GameEndState.draw:
         return 'Game drawn';
-
       case GameEndState.none:
         return '';
     }
@@ -480,30 +416,18 @@ class _BoardScreenState extends State<BoardScreen> {
   Widget _gameOverOverlay() {
     return Positioned.fill(
       child: ColoredBox(
-        color: Colors.black.withValues(
-          alpha: 0.58,
-        ),
+        color: Colors.black.withValues(alpha: 0.58),
         child: Center(
           child: Container(
-            constraints: const BoxConstraints(
-              maxWidth: 310,
-            ),
+            constraints: const BoxConstraints(maxWidth: 310),
             margin: const EdgeInsets.all(20),
-            padding: const EdgeInsets.fromLTRB(
-              24,
-              22,
-              24,
-              20,
-            ),
+            padding: const EdgeInsets.fromLTRB(24, 22, 24, 20),
             decoration: BoxDecoration(
               color: const Color(0xFF26252B),
-              borderRadius:
-                  BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(20),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(
-                    alpha: 0.35,
-                  ),
+                  color: Colors.black.withValues(alpha: 0.35),
                   blurRadius: 24,
                   offset: const Offset(0, 8),
                 ),
@@ -523,8 +447,7 @@ class _BoardScreenState extends State<BoardScreen> {
                   textAlign: TextAlign.center,
                   style: const TextStyle(
                     fontSize: 23,
-                    fontWeight:
-                        FontWeight.w800,
+                    fontWeight: FontWeight.w800,
                     letterSpacing: 1.1,
                   ),
                 ),
@@ -532,21 +455,15 @@ class _BoardScreenState extends State<BoardScreen> {
                 Text(
                   _endSubtitle(),
                   textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    fontSize: 15,
-                    color: Colors.white70,
-                  ),
+                  style: const TextStyle(fontSize: 15, color: Colors.white70),
                 ),
                 const SizedBox(height: 18),
                 SizedBox(
                   width: double.infinity,
                   child: FilledButton.icon(
                     onPressed: resetGame,
-                    icon: const Icon(
-                      Icons.replay,
-                    ),
-                    label:
-                        const Text('Play again'),
+                    icon: const Icon(Icons.replay),
+                    label: const Text('Play again'),
                   ),
                 ),
               ],
@@ -557,14 +474,9 @@ class _BoardScreenState extends State<BoardScreen> {
     );
   }
 
-  // ---------------------------------------------------------------------------
-  // BUILD
-  // ---------------------------------------------------------------------------
-
   @override
   Widget build(BuildContext context) {
     final inCheck = controller.isInCheck();
-
     final gameOver = controller.isGameOver();
 
     final String statusText;
@@ -584,94 +496,59 @@ class _BoardScreenState extends State<BoardScreen> {
         child: LayoutBuilder(
           builder: (context, constraints) {
             final bool compact =
-                constraints.maxWidth < 700 ||
-                constraints.maxHeight < 760;
+                constraints.maxWidth < 700 || constraints.maxHeight < 760;
 
-            final double horizontalPadding =
-                compact ? 10 : 18;
-
-            final double headerHeight =
-                compact ? 78 : 104;
-
-            final double controlsHeight =
-                compact ? 66 : 82;
+            final double horizontalPadding = compact ? 10 : 18;
+            final double headerHeight = compact ? 78 : 104;
+            final double controlsHeight = compact ? 66 : 82;
 
             final double maxBoardWidth =
-                constraints.maxWidth -
-                (horizontalPadding * 2);
+                constraints.maxWidth - (horizontalPadding * 2);
 
             final double maxBoardHeight =
-                constraints.maxHeight -
-                headerHeight -
-                controlsHeight;
+                constraints.maxHeight - headerHeight - controlsHeight;
 
             final double boardSize = math.max(
               240,
-              math.min(
-                maxBoardWidth,
-                math.min(
-                  maxBoardHeight,
-                  620,
-                ),
-              ),
+              math.min(maxBoardWidth, math.min(maxBoardHeight, 620)),
             );
 
             return Padding(
-              padding: EdgeInsets.symmetric(
-                horizontal: horizontalPadding,
-              ),
+              padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
               child: Column(
                 children: [
-                  SizedBox(
-                    height: compact ? 8 : 14,
-                  ),
+                  SizedBox(height: compact ? 8 : 14),
                   Text(
                     'ENDGAME MASTERY',
                     style: TextStyle(
-                      fontSize:
-                          compact ? 20 : 26,
-                      fontWeight:
-                          FontWeight.w700,
-                      letterSpacing:
-                          compact ? 1.0 : 1.4,
+                      fontSize: compact ? 20 : 26,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: compact ? 1.0 : 1.4,
                     ),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     statusText,
                     style: TextStyle(
-                      fontSize:
-                          compact ? 13 : 15,
+                      fontSize: compact ? 13 : 15,
                       color: engineError != null
-                          ? const Color(
-                              0xFFFF8A80,
-                            )
+                          ? const Color(0xFFFF8A80)
                           : gameOver
-                              ? const Color(
-                                  0xFFE8C76A,
-                                )
-                              : inCheck
-                                  ? const Color(
-                                      0xFFFF8A80,
-                                    )
-                                  : gameEngineController
-                                          .engineBusy
-                                      ? const Color(
-                                          0xFFE8C76A,
-                                        )
-                                      : Colors.white70,
+                          ? const Color(0xFFE8C76A)
+                          : inCheck
+                          ? const Color(0xFFFF8A80)
+                          : gameEngineController.engineBusy
+                          ? const Color(0xFFE8C76A)
+                          : Colors.white70,
                       fontWeight:
                           (inCheck ||
-                                  gameOver ||
-                                  gameEngineController
-                                      .engineBusy)
-                              ? FontWeight.w700
-                              : FontWeight.w500,
+                              gameOver ||
+                              gameEngineController.engineBusy)
+                          ? FontWeight.w700
+                          : FontWeight.w500,
                     ),
                   ),
-                  SizedBox(
-                    height: compact ? 8 : 16,
-                  ),
+                  SizedBox(height: compact ? 8 : 16),
                   Expanded(
                     child: Center(
                       child: SizedBox(
@@ -680,85 +557,54 @@ class _BoardScreenState extends State<BoardScreen> {
                         child: Stack(
                           children: [
                             ChessBoard(
-                              whiteBottom:
-                                  whiteBottom,
-                              selectedSquare:
-                                  selectedSquare,
-                              legalTargets:
-                                  legalTargets,
+                              whiteBottom: whiteBottom,
+                              selectedSquare: selectedSquare,
+                              legalTargets: legalTargets,
                               lastFrom: lastFrom,
                               lastTo: lastTo,
-                              checkedSquare:
-                                  controller
-                                      .checkedKingSquare(),
-                              pedagogicalSquares:
-                                  widget
-                                      .pedagogicalSquares,
-                              pieceVisualAt:
-                                  controller
-                                      .pieceVisualAt,
-                              canDragPieceAt:
-                                  (square) {
+                              checkedSquare: controller.checkedKingSquare(),
+                              pedagogicalSquares: widget.pedagogicalSquares,
+                              pieceVisualAt: controller.pieceVisualAt,
+                              canDragPieceAt: (square) {
                                 if (interactionLocked) {
                                   return false;
                                 }
 
-                                return controller
-                                    .canSelect(
-                                  square,
-                                );
+                                return controller.canSelect(square);
                               },
-                              onSquareTap:
-                                  onSquareTap,
-                              onPieceDragStart:
-                                  selectSquare,
-                              onPieceDropped:
-                                  attemptMove,
+                              onSquareTap: onSquareTap,
+                              onPieceDragStart: selectSquare,
+                              onPieceDropped: attemptMove,
                             ),
-                            if (gameOver)
-                              _gameOverOverlay(),
+                            if (gameOver) _gameOverOverlay(),
                           ],
                         ),
                       ),
                     ),
                   ),
-                  SizedBox(
-                    height: compact ? 8 : 14,
-                  ),
+                  SizedBox(height: compact ? 8 : 14),
                   SafeArea(
                     top: false,
                     child: Padding(
-                      padding:
-                          const EdgeInsets.only(
-                        bottom: 8,
-                      ),
+                      padding: const EdgeInsets.only(bottom: 8),
                       child: Wrap(
                         spacing: 10,
                         runSpacing: 8,
-                        alignment:
-                            WrapAlignment.center,
+                        alignment: WrapAlignment.center,
                         children: [
                           FilledButton.icon(
                             onPressed: () {
                               setState(() {
-                                whiteBottom =
-                                    !whiteBottom;
+                                whiteBottom = !whiteBottom;
                               });
                             },
-                            icon: const Icon(
-                              Icons.flip,
-                            ),
-                            label: const Text(
-                              'Flip board',
-                            ),
+                            icon: const Icon(Icons.flip),
+                            label: const Text('Flip board'),
                           ),
                           OutlinedButton.icon(
                             onPressed: resetGame,
-                            icon: const Icon(
-                              Icons.restart_alt,
-                            ),
-                            label:
-                                const Text('Reset'),
+                            icon: const Icon(Icons.restart_alt),
+                            label: const Text('Reset'),
                           ),
                         ],
                       ),

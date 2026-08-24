@@ -15,12 +15,26 @@ void main() {
   const insufficientMaterialFen =
       '8/8/8/8/8/2k5/8/2K5 w - - 0 1';
 
+  // ---------------------------------------------------------------------------
+  // APP / BOARD
+  // ---------------------------------------------------------------------------
+
   testWidgets(
     'Endgame Mastery board loads',
     (WidgetTester tester) async {
       await tester.pumpWidget(
         const EndgameMasteryApp(),
       );
+
+      // BoardScreen now initializes the chess engine asynchronously.
+      //
+      // The first frame may legitimately display:
+      //
+      //   Preparing engine…
+      //
+      // Give the initialization Future time to complete and then
+      // render the resulting state.
+      await tester.pumpAndSettle();
 
       expect(
         find.text('ENDGAME MASTERY'),
@@ -33,6 +47,10 @@ void main() {
       );
     },
   );
+
+  // ---------------------------------------------------------------------------
+  // DEFAULT DVORETSKY POSITION
+  // ---------------------------------------------------------------------------
 
   test(
     'Dvoretsky position loads correctly',
@@ -67,6 +85,10 @@ void main() {
       );
     },
   );
+
+  // ---------------------------------------------------------------------------
+  // PROMOTION
+  // ---------------------------------------------------------------------------
 
   test(
     'e7-e8 requires explicit promotion',
@@ -204,6 +226,10 @@ void main() {
       );
     },
   );
+
+  // ---------------------------------------------------------------------------
+  // GAME END STATES
+  // ---------------------------------------------------------------------------
 
   test(
     'checkmate is detected',

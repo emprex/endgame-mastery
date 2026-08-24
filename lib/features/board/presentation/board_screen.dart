@@ -2,6 +2,8 @@ import 'dart:math' as math;
 
 import 'package:chess_vectors_flutter/chess_vectors_flutter.dart';
 import 'package:endgame_mastery/core/chess/chess_controller.dart';
+import 'package:endgame_mastery/core/engine/legal_move_test_engine.dart';
+import 'package:endgame_mastery/core/game/game_engine_controller.dart';
 import 'package:endgame_mastery/features/board/presentation/chess_board.dart';
 import 'package:flutter/material.dart';
 
@@ -14,18 +16,116 @@ class BoardScreen extends StatefulWidget {
 }
 
 class _BoardScreenState extends State<BoardScreen> {
+  // ---------------------------------------------------------------------------
+  // CHESS POSITION
+  // ---------------------------------------------------------------------------
+
   final ChessController controller =
       ChessController();
+
+  // ---------------------------------------------------------------------------
+  // ENGINE ORCHESTRATION
+  // ---------------------------------------------------------------------------
+
+  late final GameEngineController
+      gameEngineController;
+
+  bool engineReady = false;
+
+  Object? engineError;
+
+  // ---------------------------------------------------------------------------
+  // BOARD UI STATE
+  // ---------------------------------------------------------------------------
 
   bool whiteBottom = true;
 
   String? selectedSquare;
-  Set<String> legalTargets = <String>{};
+
+  Set<String> legalTargets =
+      <String>{};
 
   String? lastFrom;
+
   String? lastTo;
 
   bool promotionDialogOpen = false;
+
+  // ---------------------------------------------------------------------------
+  // LIFECYCLE
+  // ---------------------------------------------------------------------------
+
+  @override
+  void initState() {
+    super.initState();
+
+    // Temporary deterministic engine.
+    //
+    // This is NOT Stockfish yet.
+    //
+    // Its purpose is to validate the complete
+    // asynchronous UI/gameplay pipeline before
+    // replacing it with the real Stockfish adapter.
+    gameEngineController =
+        GameEngineController(
+      chessController: controller,
+      engine: LegalMoveTestEngine(),
+      engineSide: EngineSide.black,
+    );
+
+    _initializeEngine();
+  }
+
+  Future<void> _initializeEngine() async {
+    try {
+      await gameEngineController
+          .initialize();
+
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        engineReady = true;
+        engineError = null;
+      });
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        engineError = error;
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    // dispose() itself cannot await.
+    //
+    // The GameEngineController still invalidates
+    // pending requests immediately before releasing
+    // the underlying engine.
+    gameEngineController.dispose();
+
+    super.dispose();
+  }
+
+  // ---------------------------------------------------------------------------
+  // INTERACTION LOCK
+  // ---------------------------------------------------------------------------
+
+  bool get interactionLocked {
+    return !engineReady ||
+        gameEngineController.engineBusy ||
+        gameEngineController.isEngineTurn ||
+        controller.isGameOver();
+  }
+
+  // ---------------------------------------------------------------------------
+  // BOARD SELECTION
+  // ---------------------------------------------------------------------------
 
   void clearSelection() {
     if (!mounted) {
@@ -40,7 +140,7 @@ class _BoardScreenState extends State<BoardScreen> {
 
   void selectSquare(String square) {
     if (promotionDialogOpen ||
-        controller.isGameOver()) {
+        interactionLocked) {
       return;
     }
 
@@ -52,13 +152,15 @@ class _BoardScreenState extends State<BoardScreen> {
     setState(() {
       selectedSquare = square;
       legalTargets =
-          controller.legalTargets(square);
+          controller.legalTargets(
+        square,
+      );
     });
   }
 
   void onSquareTap(String square) {
     if (promotionDialogOpen ||
-        controller.isGameOver()) {
+        interactionLocked) {
       return;
     }
 
@@ -77,18 +179,23 @@ class _BoardScreenState extends State<BoardScreen> {
         from: selectedSquare!,
         to: square,
       );
+
       return;
     }
 
     selectSquare(square);
   }
 
+  // ---------------------------------------------------------------------------
+  // USER MOVE -> ENGINE MOVE
+  // ---------------------------------------------------------------------------
+
   Future<void> attemptMove({
     required String from,
     required String to,
   }) async {
     if (promotionDialogOpen ||
-        controller.isGameOver()) {
+        interactionLocked) {
       return;
     }
 
@@ -100,11 +207,17 @@ class _BoardScreenState extends State<BoardScreen> {
       to: to,
     );
 
+    // -------------------------------------------------------------------------
+    // PROMOTION
+    // -------------------------------------------------------------------------
+
     if (needsPromotion) {
       promotionDialogOpen = true;
 
       final piece =
-          controller.pieceVisualAt(from);
+          controller.pieceVisualAt(
+        from,
+      );
 
       final isWhite =
           piece?.isWhite ?? true;
@@ -122,7 +235,13 @@ class _BoardScreenState extends State<BoardScreen> {
       }
     }
 
-    final moved = controller.move(
+    // -------------------------------------------------------------------------
+    // APPLY USER MOVE IMMEDIATELY
+    // -------------------------------------------------------------------------
+
+    final moved =
+        gameEngineController
+            .playUserMove(
       from: from,
       to: to,
       promotion: promotion,
@@ -132,15 +251,112 @@ class _BoardScreenState extends State<BoardScreen> {
       return;
     }
 
+    // Important:
+    //
+    // We repaint BEFORE asking the engine to think.
+    //
+    // This gives us:
+    //
+    // User moves
+    // -> board updates immediately
+    // -> engine thinks afterwards.
     setState(() {
       lastFrom = from;
       lastTo = to;
+
       selectedSquare = null;
       legalTargets = <String>{};
+
+      engineError = null;
     });
+
+    // User move may itself have ended the game.
+    if (controller.isGameOver()) {
+      return;
+    }
+
+    if (!gameEngineController
+        .isEngineTurn) {
+      return;
+    }
+
+    // Give Flutter one frame to render
+    // the user's move before engine work begins.
+    await WidgetsBinding
+        .instance.endOfFrame;
+
+    if (!mounted) {
+      return;
+    }
+
+    // -------------------------------------------------------------------------
+    // START ENGINE SEARCH
+    // -------------------------------------------------------------------------
+
+    final engineFuture =
+        gameEngineController
+            .requestEngineMove();
+
+    // requestEngineMove() changes engineBusy
+    // synchronously before its first await.
+    //
+    // Rebuild immediately so the UI displays:
+    //
+    // "Stockfish thinking..."
+    //
+    // and locks user interaction.
+    setState(() {});
+
+    try {
+      final engineMoved =
+          await engineFuture;
+
+      if (!mounted) {
+        return;
+      }
+
+      if (!engineMoved) {
+        // The search may have become stale because
+        // of reset/dispose/position revision.
+        setState(() {});
+        return;
+      }
+
+      final engineMove =
+          gameEngineController
+              .lastEngineMove;
+
+      // -----------------------------------------------------------------------
+      // DISPLAY ENGINE MOVE
+      // -----------------------------------------------------------------------
+
+      setState(() {
+        lastFrom = engineMove?.from;
+        lastTo = engineMove?.to;
+
+        engineError = null;
+      });
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+
+      // The UI stays alive even if the engine fails.
+      //
+      // Later we can turn this into a retry/action
+      // panel rather than merely a status message.
+      setState(() {
+        engineError = error;
+      });
+    }
   }
 
-  Future<String?> _showPromotionDialog({
+  // ---------------------------------------------------------------------------
+  // PROMOTION DIALOG
+  // ---------------------------------------------------------------------------
+
+  Future<String?>
+      _showPromotionDialog({
     required bool isWhite,
   }) {
     return showDialog<String>(
@@ -151,10 +367,14 @@ class _BoardScreenState extends State<BoardScreen> {
       ) {
         return Dialog(
           backgroundColor:
-              const Color(0xFF2B2932),
+              const Color(
+            0xFF2B2932,
+          ),
           shape: RoundedRectangleBorder(
             borderRadius:
-                BorderRadius.circular(22),
+                BorderRadius.circular(
+              22,
+            ),
           ),
           child: ConstrainedBox(
             constraints:
@@ -163,7 +383,9 @@ class _BoardScreenState extends State<BoardScreen> {
             ),
             child: Padding(
               padding:
-                  const EdgeInsets.all(20),
+                  const EdgeInsets.all(
+                20,
+              ),
               child: Column(
                 mainAxisSize:
                     MainAxisSize.min,
@@ -249,7 +471,8 @@ class _BoardScreenState extends State<BoardScreen> {
   }
 
   Widget _promotionPieceButton({
-    required BuildContext dialogContext,
+    required BuildContext
+        dialogContext,
     required String value,
     required String label,
     required Widget piece,
@@ -259,20 +482,28 @@ class _BoardScreenState extends State<BoardScreen> {
       label: label,
       child: InkWell(
         borderRadius:
-            BorderRadius.circular(14),
+            BorderRadius.circular(
+          14,
+        ),
         onTap: () {
           Navigator.of(
             dialogContext,
-          ).pop(value);
+          ).pop(
+            value,
+          );
         },
         child: Container(
           width: 78,
           height: 88,
           decoration: BoxDecoration(
             color:
-                const Color(0xFF3A3742),
+                const Color(
+              0xFF3A3742,
+            ),
             borderRadius:
-                BorderRadius.circular(14),
+                BorderRadius.circular(
+              14,
+            ),
           ),
           child: Column(
             mainAxisAlignment:
@@ -284,9 +515,11 @@ class _BoardScreenState extends State<BoardScreen> {
               ),
               Text(
                 label,
-                style: const TextStyle(
+                style:
+                    const TextStyle(
                   fontSize: 11,
-                  color: Colors.white70,
+                  color:
+                      Colors.white70,
                 ),
               ),
             ],
@@ -296,26 +529,48 @@ class _BoardScreenState extends State<BoardScreen> {
     );
   }
 
-  void resetGame() {
-    controller.reset();
+  // ---------------------------------------------------------------------------
+  // RESET
+  // ---------------------------------------------------------------------------
+
+  Future<void> resetGame() async {
+    // GameEngineController invalidates any
+    // pending engine request before resetting
+    // the chess position.
+    await gameEngineController.reset();
+
+    if (!mounted) {
+      return;
+    }
 
     setState(() {
       selectedSquare = null;
       legalTargets = <String>{};
+
       lastFrom = null;
       lastTo = null;
+
       promotionDialogOpen = false;
+
+      engineError = null;
     });
   }
+
+  // ---------------------------------------------------------------------------
+  // GAME END PRESENTATION
+  // ---------------------------------------------------------------------------
 
   String _endTitle() {
     switch (controller.gameEndState()) {
       case GameEndState.checkmate:
         return 'CHECKMATE';
+
       case GameEndState.stalemate:
         return 'STALEMATE';
+
       case GameEndState.draw:
         return 'DRAW';
+
       case GameEndState.none:
         return '';
     }
@@ -324,13 +579,17 @@ class _BoardScreenState extends State<BoardScreen> {
   String _endSubtitle() {
     switch (controller.gameEndState()) {
       case GameEndState.checkmate:
-        return controller.isWhiteToMove()
+        return controller
+                .isWhiteToMove()
             ? 'Black wins'
             : 'White wins';
+
       case GameEndState.stalemate:
         return 'No legal moves';
+
       case GameEndState.draw:
         return 'Game drawn';
+
       case GameEndState.none:
         return '';
     }
@@ -339,7 +598,8 @@ class _BoardScreenState extends State<BoardScreen> {
   Widget _gameOverOverlay() {
     return Positioned.fill(
       child: ColoredBox(
-        color: Colors.black.withValues(
+        color:
+            Colors.black.withValues(
           alpha: 0.58,
         ),
         child: Center(
@@ -349,7 +609,9 @@ class _BoardScreenState extends State<BoardScreen> {
               maxWidth: 310,
             ),
             margin:
-                const EdgeInsets.all(20),
+                const EdgeInsets.all(
+              20,
+            ),
             padding:
                 const EdgeInsets.fromLTRB(
               24,
@@ -359,18 +621,25 @@ class _BoardScreenState extends State<BoardScreen> {
             ),
             decoration: BoxDecoration(
               color:
-                  const Color(0xFF26252B),
+                  const Color(
+                0xFF26252B,
+              ),
               borderRadius:
-                  BorderRadius.circular(20),
+                  BorderRadius.circular(
+                20,
+              ),
               boxShadow: [
                 BoxShadow(
-                  color:
-                      Colors.black.withValues(
+                  color: Colors.black
+                      .withValues(
                     alpha: 0.35,
                   ),
                   blurRadius: 24,
                   offset:
-                      const Offset(0, 8),
+                      const Offset(
+                    0,
+                    8,
+                  ),
                 ),
               ],
             ),
@@ -382,7 +651,9 @@ class _BoardScreenState extends State<BoardScreen> {
                   Icons.emoji_events,
                   size: 34,
                   color:
-                      Color(0xFFE8C76A),
+                      Color(
+                    0xFFE8C76A,
+                  ),
                 ),
                 const SizedBox(
                   height: 10,
@@ -391,11 +662,13 @@ class _BoardScreenState extends State<BoardScreen> {
                   _endTitle(),
                   textAlign:
                       TextAlign.center,
-                  style: const TextStyle(
+                  style:
+                      const TextStyle(
                     fontSize: 23,
                     fontWeight:
                         FontWeight.w800,
-                    letterSpacing: 1.1,
+                    letterSpacing:
+                        1.1,
                   ),
                 ),
                 const SizedBox(
@@ -405,23 +678,29 @@ class _BoardScreenState extends State<BoardScreen> {
                   _endSubtitle(),
                   textAlign:
                       TextAlign.center,
-                  style: const TextStyle(
+                  style:
+                      const TextStyle(
                     fontSize: 15,
-                    color: Colors.white70,
+                    color:
+                        Colors.white70,
                   ),
                 ),
                 const SizedBox(
                   height: 18,
                 ),
                 SizedBox(
-                  width: double.infinity,
-                  child: FilledButton.icon(
+                  width:
+                      double.infinity,
+                  child:
+                      FilledButton.icon(
                     onPressed:
                         resetGame,
-                    icon: const Icon(
+                    icon:
+                        const Icon(
                       Icons.replay,
                     ),
-                    label: const Text(
+                    label:
+                        const Text(
                       'Play again',
                     ),
                   ),
@@ -434,6 +713,10 @@ class _BoardScreenState extends State<BoardScreen> {
     );
   }
 
+  // ---------------------------------------------------------------------------
+  // BUILD
+  // ---------------------------------------------------------------------------
+
   @override
   Widget build(
     BuildContext context,
@@ -443,6 +726,36 @@ class _BoardScreenState extends State<BoardScreen> {
 
     final gameOver =
         controller.isGameOver();
+
+    // -------------------------------------------------------------------------
+    // STATUS MESSAGE
+    // -------------------------------------------------------------------------
+    //
+    // Priority:
+    //
+    // 1. Engine error
+    // 2. Engine initialization
+    // 3. Engine thinking
+    // 4. Normal chess position status
+    //
+    // Later this can become a richer coach/status component.
+
+    final String statusText;
+
+    if (engineError != null) {
+      statusText =
+          'Engine error';
+    } else if (!engineReady) {
+      statusText =
+          'Preparing engine…';
+    } else if (gameEngineController
+        .engineBusy) {
+      statusText =
+          'Stockfish thinking…';
+    } else {
+      statusText =
+          controller.turnText();
+    }
 
     return Scaffold(
       body: SafeArea(
@@ -454,23 +767,30 @@ class _BoardScreenState extends State<BoardScreen> {
             final bool compact =
                 constraints.maxWidth <
                         700 ||
-                    constraints.maxHeight <
+                    constraints
+                            .maxHeight <
                         760;
 
-            final double horizontalPadding =
+            final double
+                horizontalPadding =
                 compact ? 10 : 18;
 
-            final double headerHeight =
+            final double
+                headerHeight =
                 compact ? 78 : 104;
 
-            final double controlsHeight =
+            final double
+                controlsHeight =
                 compact ? 66 : 82;
 
-            final double maxBoardWidth =
+            final double
+                maxBoardWidth =
                 constraints.maxWidth -
-                    (horizontalPadding * 2);
+                    (horizontalPadding *
+                        2);
 
-            final double maxBoardHeight =
+            final double
+                maxBoardHeight =
                 constraints.maxHeight -
                     headerHeight -
                     controlsHeight;
@@ -497,18 +817,29 @@ class _BoardScreenState extends State<BoardScreen> {
                 children: [
                   SizedBox(
                     height:
-                        compact ? 8 : 14,
+                        compact
+                            ? 8
+                            : 14,
                   ),
+
+                  // ------------------------------------------------------------
+                  // APP TITLE
+                  // ------------------------------------------------------------
 
                   Text(
                     'ENDGAME MASTERY',
                     style: TextStyle(
                       fontSize:
-                          compact ? 20 : 26,
+                          compact
+                              ? 20
+                              : 26,
                       fontWeight:
-                          FontWeight.w700,
+                          FontWeight
+                              .w700,
                       letterSpacing:
-                          compact ? 1.0 : 1.4,
+                          compact
+                              ? 1.0
+                              : 1.4,
                     ),
                   ),
 
@@ -516,38 +847,68 @@ class _BoardScreenState extends State<BoardScreen> {
                     height: 4,
                   ),
 
+                  // ------------------------------------------------------------
+                  // GAME / ENGINE STATUS
+                  // ------------------------------------------------------------
+
                   Text(
-                    controller.turnText(),
+                    statusText,
                     style: TextStyle(
                       fontSize:
-                          compact ? 13 : 15,
-                      color: gameOver
-                          ? const Color(
-                              0xFFE8C76A,
-                            )
-                          : inCheck
+                          compact
+                              ? 13
+                              : 15,
+                      color:
+                          engineError !=
+                                  null
                               ? const Color(
                                   0xFFFF8A80,
                                 )
-                              : Colors.white70,
+                              : gameOver
+                                  ? const Color(
+                                      0xFFE8C76A,
+                                    )
+                                  : inCheck
+                                      ? const Color(
+                                          0xFFFF8A80,
+                                        )
+                                      : gameEngineController
+                                              .engineBusy
+                                          ? const Color(
+                                              0xFFE8C76A,
+                                            )
+                                          : Colors
+                                              .white70,
                       fontWeight:
                           (inCheck ||
-                                  gameOver)
-                              ? FontWeight.w700
-                              : FontWeight.w500,
+                                  gameOver ||
+                                  gameEngineController
+                                      .engineBusy)
+                              ? FontWeight
+                                  .w700
+                              : FontWeight
+                                  .w500,
                     ),
                   ),
 
                   SizedBox(
                     height:
-                        compact ? 8 : 16,
+                        compact
+                            ? 8
+                            : 16,
                   ),
+
+                  // ------------------------------------------------------------
+                  // CHESS BOARD
+                  // ------------------------------------------------------------
 
                   Expanded(
                     child: Center(
                       child: SizedBox(
-                        width: boardSize,
-                        height: boardSize,
+                        width:
+                            boardSize,
+                        height:
+                            boardSize,
                         child: Stack(
                           children: [
                             ChessBoard(
@@ -567,16 +928,36 @@ class _BoardScreenState extends State<BoardScreen> {
                               pieceVisualAt:
                                   controller
                                       .pieceVisualAt,
+
+                              // Dragging is disabled while
+                              // the engine is thinking,
+                              // before initialization,
+                              // during engine's turn,
+                              // or after game over.
                               canDragPieceAt:
-                                  controller
-                                      .canSelect,
+                                  (
+                                square,
+                              ) {
+                                if (interactionLocked) {
+                                  return false;
+                                }
+
+                                return controller
+                                    .canSelect(
+                                  square,
+                                );
+                              },
+
                               onSquareTap:
                                   onSquareTap,
+
                               onPieceDragStart:
                                   selectSquare,
+
                               onPieceDropped:
                                   attemptMove,
                             ),
+
                             if (gameOver)
                               _gameOverOverlay(),
                           ],
@@ -587,21 +968,29 @@ class _BoardScreenState extends State<BoardScreen> {
 
                   SizedBox(
                     height:
-                        compact ? 8 : 14,
+                        compact
+                            ? 8
+                            : 14,
                   ),
+
+                  // ------------------------------------------------------------
+                  // BOARD CONTROLS
+                  // ------------------------------------------------------------
 
                   SafeArea(
                     top: false,
                     child: Padding(
                       padding:
-                          const EdgeInsets.only(
+                          const EdgeInsets
+                              .only(
                         bottom: 8,
                       ),
                       child: Wrap(
                         spacing: 10,
                         runSpacing: 8,
                         alignment:
-                            WrapAlignment.center,
+                            WrapAlignment
+                                .center,
                         children: [
                           FilledButton.icon(
                             onPressed: () {
@@ -610,7 +999,8 @@ class _BoardScreenState extends State<BoardScreen> {
                                     !whiteBottom;
                               });
                             },
-                            icon: const Icon(
+                            icon:
+                                const Icon(
                               Icons.flip,
                             ),
                             label:
@@ -621,8 +1011,10 @@ class _BoardScreenState extends State<BoardScreen> {
                           OutlinedButton.icon(
                             onPressed:
                                 resetGame,
-                            icon: const Icon(
-                              Icons.restart_alt,
+                            icon:
+                                const Icon(
+                              Icons
+                                  .restart_alt,
                             ),
                             label:
                                 const Text(

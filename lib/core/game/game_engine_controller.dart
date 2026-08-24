@@ -33,10 +33,15 @@ class GameEngineController {
   bool _disposed = false;
   bool _engineBusy = false;
 
+  EngineMove? _lastEngineMove;
+
   int _positionRevision = 0;
   int _requestId = 0;
 
   bool get engineBusy => _engineBusy;
+
+  EngineMove? get lastEngineMove =>
+      _lastEngineMove;
 
   bool get isDisposed => _disposed;
 
@@ -162,6 +167,8 @@ class GameEngineController {
         );
       }
 
+      _lastEngineMove = move;
+
       _positionRevision++;
 
       return true;
@@ -191,6 +198,8 @@ class GameEngineController {
     await engine.stop();
 
     chessController.reset();
+
+    _lastEngineMove = null;
 
     _positionRevision++;
   }

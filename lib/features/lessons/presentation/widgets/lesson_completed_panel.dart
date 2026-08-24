@@ -5,10 +5,14 @@ class LessonCompletedPanel extends StatelessWidget {
     super.key,
     required this.lessonTitle,
     required this.curriculumEnd,
+    this.primaryActionLabel,
+    this.onPrimaryAction,
   });
 
   final String lessonTitle;
   final bool curriculumEnd;
+  final String? primaryActionLabel;
+  final VoidCallback? onPrimaryAction;
 
   @override
   Widget build(BuildContext context) {
@@ -59,6 +63,17 @@ class LessonCompletedPanel extends StatelessWidget {
                 color: Colors.white.withValues(alpha: 0.82),
               ),
             ),
+            if (onPrimaryAction != null && primaryActionLabel != null) ...[
+              const SizedBox(height: 20),
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton(
+                  key: const ValueKey<String>('lesson-next-button'),
+                  onPressed: onPrimaryAction,
+                  child: Text(primaryActionLabel!),
+                ),
+              ),
+            ],
           ],
         ),
       ),

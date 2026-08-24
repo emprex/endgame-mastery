@@ -9,12 +9,22 @@ final LessonHints keySquaresLesson01Hints = LessonHints(
       'A key square is a square whose occupation by the king guarantees the '
       'desired theoretical result. Focus on reaching a key square rather than '
       'simply advancing the pawn.',
-
   visual:
       'Look at the three key squares in front of the pawn: c6, d6, and e6. '
       'The white king on d5 has not reached one of them yet.',
-
   targeted:
       'Your objective is to get the white king onto c6, d6, or e6. '
       'Consider how the side to move affects whether Black can prevent that.',
+);
+
+final LessonHints keySquaresLesson02Hints = LessonHints(
+  concept:
+      'A non-rook pawn on the fifth rank has a larger key-square zone than a '
+      'pawn farther back.',
+  visual:
+      'Look at the two rows of key squares ahead of the pawn: '
+      'c6, d6, e6, c7, d7, and e7.',
+  targeted:
+      'Guide the white king toward one of the six highlighted key squares. '
+      'Use the larger target zone created by the pawn on d5.',
 );

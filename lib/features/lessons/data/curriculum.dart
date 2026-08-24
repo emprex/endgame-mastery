@@ -3,8 +3,8 @@ import 'pawn_endgame_lessons.dart';
 
 /// Current Endgame Mastery curriculum.
 ///
-/// Keep this list intentionally small while the lesson architecture
-/// is still being built and validated.
+/// Lessons are added incrementally only after their pedagogical theory,
+/// position data and tests have been verified.
 final List<LessonDefinition> curriculum = List<LessonDefinition>.unmodifiable(
-  <LessonDefinition>[keySquaresLesson01],
+  <LessonDefinition>[keySquaresLesson01, keySquaresLesson02],
 );

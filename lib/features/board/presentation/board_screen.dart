@@ -12,12 +12,14 @@ import 'package:flutter/material.dart';
 class BoardScreen extends StatefulWidget {
   const BoardScreen({
     super.key,
+    this.initialFen,
     this.pedagogicalSquares = const <String>{},
     this.onFenChanged,
     this.onGameEnded,
     this.onMovePlayed,
   });
 
+  final String? initialFen;
   final Set<String> pedagogicalSquares;
   final ValueChanged<String>? onFenChanged;
   final ValueChanged<BoardGameResult>? onGameEnded;
@@ -28,8 +30,7 @@ class BoardScreen extends StatefulWidget {
 }
 
 class _BoardScreenState extends State<BoardScreen> {
-  final ChessController controller = ChessController();
-
+  late final ChessController controller;
   late final GameEngineController gameEngineController;
 
   bool engineReady = false;
@@ -45,6 +46,8 @@ class _BoardScreenState extends State<BoardScreen> {
   @override
   void initState() {
     super.initState();
+
+    controller = ChessController(fen: widget.initialFen);
 
     gameEngineController = GameEngineController(
       chessController: controller,

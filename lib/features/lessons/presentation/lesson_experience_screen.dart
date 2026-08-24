@@ -1,8 +1,11 @@
 import 'package:endgame_mastery/core/chess/board_game_result.dart';
 import 'package:endgame_mastery/core/chess/played_move.dart';
 import 'package:endgame_mastery/features/board/presentation/board_screen.dart';
+import 'package:endgame_mastery/features/lessons/data/curriculum.dart';
 import 'package:endgame_mastery/features/lessons/data/pawn_endgame_hints.dart';
 import 'package:endgame_mastery/features/lessons/data/pawn_endgame_lessons.dart';
+import 'package:endgame_mastery/features/lessons/domain/lesson_definition.dart';
+import 'package:endgame_mastery/features/lessons/domain/lesson_hints.dart';
 import 'package:endgame_mastery/features/lessons/presentation/lesson_experience_presenter.dart';
 import 'package:endgame_mastery/features/lessons/presentation/widgets/lesson_completed_panel.dart';
 import 'package:endgame_mastery/features/lessons/presentation/widgets/lesson_learn_panel.dart';
@@ -13,6 +16,7 @@ import 'package:endgame_mastery/features/lessons/session/lesson_experience_build
 import 'package:endgame_mastery/features/lessons/session/lesson_hint_controller.dart';
 import 'package:endgame_mastery/features/lessons/session/lesson_hint_overlay_policy.dart';
 import 'package:endgame_mastery/features/lessons/session/lesson_move_explanation_controller.dart';
+import 'package:endgame_mastery/features/lessons/session/lesson_progression.dart';
 import 'package:endgame_mastery/features/lessons/session/lesson_session_controller.dart';
 import 'package:endgame_mastery/features/lessons/session/lesson_session_outcome.dart';
 import 'package:endgame_mastery/features/lessons/session/lesson_session_state.dart';
@@ -38,9 +42,12 @@ class _LessonExperienceScreenState extends State<LessonExperienceScreen> {
   static const LessonHintOverlayPolicy _hintOverlayPolicy =
       LessonHintOverlayPolicy();
 
-  late final LessonSessionController _sessionController;
-  late final LessonHintController _hintController;
-  late final LessonMoveExplanationController _moveExplanationController;
+  late final LessonProgression _progression;
+
+  late LessonDefinition _currentLesson;
+  late LessonSessionController _sessionController;
+  late LessonHintController _hintController;
+  late LessonMoveExplanationController _moveExplanationController;
 
   late String _currentFen;
 
@@ -48,44 +55,81 @@ class _LessonExperienceScreenState extends State<LessonExperienceScreen> {
 
   int _boardRevision = 0;
 
+  bool _mobilePanelExpanded = true;
+
   @override
   void initState() {
     super.initState();
 
+    _progression = LessonProgression(curriculum);
+
+    _loadLesson(_progression.firstLesson, rebuild: false);
+  }
+
+  LessonHints _hintsForLesson(LessonDefinition lesson) {
+    if (lesson.id == keySquaresLesson01.id) {
+      return keySquaresLesson01Hints;
+    }
+
+    if (lesson.id == keySquaresLesson02.id) {
+      return keySquaresLesson02Hints;
+    }
+
+    throw StateError('No hints configured for lesson ${lesson.id}.');
+  }
+
+  void _loadLesson(
+    LessonDefinition lesson, {
+    required bool rebuild,
+  }) {
+    _currentLesson = lesson;
+
     _sessionController = LessonSessionController(
-      initialState: LessonSessionState.initial(keySquaresLesson01),
+      initialState: LessonSessionState.initial(lesson),
     );
 
-    _hintController = LessonHintController(hints: keySquaresLesson01Hints);
+    _hintController = LessonHintController(
+      hints: _hintsForLesson(lesson),
+    );
 
     _moveExplanationController = LessonMoveExplanationController(
-      lesson: keySquaresLesson01,
-      initialFen: keySquaresLesson01.fen,
+      lesson: lesson,
+      initialFen: lesson.fen,
     );
 
-    _currentFen = keySquaresLesson01.fen;
+    _currentFen = lesson.fen;
+    _proofFen = null;
+    _mobilePanelExpanded = true;
+    _boardRevision++;
+
+    if (rebuild) {
+      setState(() {});
+    }
   }
 
   void _startPractice() {
     _hintController.reset();
 
-    _moveExplanationController.reset(keySquaresLesson01.fen);
+    _moveExplanationController.reset(_currentLesson.fen);
 
     _sessionController.startPractice();
 
-    setState(() {});
+    setState(() {
+      _mobilePanelExpanded = false;
+    });
   }
 
   void _startProve() {
     _hintController.reset();
 
-    _moveExplanationController.reset(keySquaresLesson01.fen);
+    _moveExplanationController.reset(_currentLesson.fen);
 
     _sessionController.startProve();
 
     setState(() {
-      _currentFen = keySquaresLesson01.fen;
-      _proofFen = keySquaresLesson01.fen;
+      _currentFen = _currentLesson.fen;
+      _proofFen = _currentLesson.fen;
+      _mobilePanelExpanded = false;
       _boardRevision++;
     });
   }
@@ -123,7 +167,19 @@ class _LessonExperienceScreenState extends State<LessonExperienceScreen> {
   void _completeLesson() {
     _sessionController.completeLesson();
 
-    setState(() {});
+    setState(() {
+      _mobilePanelExpanded = true;
+    });
+  }
+
+  void _openNextLesson() {
+    final nextLesson = _progression.nextLessonFor(_sessionController.state);
+
+    if (nextLesson == null) {
+      return;
+    }
+
+    _loadLesson(nextLesson, rebuild: true);
   }
 
   void _onBoardFenChanged(String fen) {
@@ -151,7 +207,15 @@ class _LessonExperienceScreenState extends State<LessonExperienceScreen> {
 
     _sessionController.completeProof(outcome);
 
-    setState(() {});
+    setState(() {
+      _mobilePanelExpanded = true;
+    });
+  }
+
+  void _toggleMobilePanel() {
+    setState(() {
+      _mobilePanelExpanded = !_mobilePanelExpanded;
+    });
   }
 
   @override
@@ -164,6 +228,7 @@ class _LessonExperienceScreenState extends State<LessonExperienceScreen> {
       proofFen: stage == LessonStage.result || stage == LessonStage.completed
           ? _proofFen
           : null,
+      progression: stage == LessonStage.completed ? _progression : null,
     );
 
     final presentation = _presenter.present(experience);
@@ -189,6 +254,7 @@ class _LessonExperienceScreenState extends State<LessonExperienceScreen> {
           widget.board ??
           BoardScreen(
             key: ValueKey<int>(_boardRevision),
+            initialFen: _currentLesson.fen,
             pedagogicalSquares: showPedagogicalSquares
                 ? experience.teaching.keySquares
                 : const <String>{},
@@ -199,13 +265,9 @@ class _LessonExperienceScreenState extends State<LessonExperienceScreen> {
     );
 
     final showLearnPanel = presentation.showLearnContent;
-
     final showPracticePanel = experience.stage == LessonStage.practice;
-
     final showProvePanel = experience.stage == LessonStage.prove;
-
     final showResultPanel = experience.stage == LessonStage.result;
-
     final showCompletedPanel = experience.stage == LessonStage.completed;
 
     Widget? sidePanel;
@@ -256,7 +318,9 @@ class _LessonExperienceScreenState extends State<LessonExperienceScreen> {
     } else if (showCompletedPanel) {
       sidePanel = LessonCompletedPanel(
         lessonTitle: experience.lesson.title,
-        curriculumEnd: presentation.curriculumEnd,
+        curriculumEnd: experience.isCurriculumEnd,
+        primaryActionLabel: experience.hasNextLesson ? 'Next Lesson' : null,
+        onPrimaryAction: experience.hasNextLesson ? _openNextLesson : null,
       );
     }
 
@@ -286,10 +350,10 @@ class _LessonExperienceScreenState extends State<LessonExperienceScreen> {
           );
         }
 
-        return Stack(
-          children: [
-            Positioned.fill(child: board),
-            if (showLearnPanel)
+        if (showLearnPanel) {
+          return Stack(
+            children: [
+              Positioned.fill(child: board),
               Positioned.fill(
                 child: ColoredBox(
                   color: const Color(0xE8171717),
@@ -301,14 +365,99 @@ class _LessonExperienceScreenState extends State<LessonExperienceScreen> {
                   ),
                 ),
               ),
-            if (!showLearnPanel && sidePanel != null)
+            ],
+          );
+        }
+
+        return Stack(
+          children: [
+            Positioned.fill(child: board),
+
+            if (!_mobilePanelExpanded && sidePanel != null)
               Positioned(
                 left: 12,
                 right: 12,
                 bottom: 12,
                 child: SafeArea(
                   top: false,
-                  child: SingleChildScrollView(child: Center(child: sidePanel)),
+                  child: Center(
+                    child: FilledButton.tonalIcon(
+                      key: const ValueKey<String>('mobile-coach-open'),
+                      onPressed: _toggleMobilePanel,
+                      icon: const Icon(Icons.school_outlined),
+                      label: Text(
+                        showProvePanel
+                            ? 'Open Prove panel'
+                            : showPracticePanel
+                                ? 'Open Coach'
+                                : 'Open lesson panel',
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+
+            if (_mobilePanelExpanded && sidePanel != null)
+              Positioned(
+                left: 8,
+                right: 8,
+                bottom: 8,
+                child: SafeArea(
+                  top: false,
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(
+                      maxHeight: constraints.maxHeight * 0.48,
+                    ),
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF171717),
+                        borderRadius: BorderRadius.circular(20),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.45),
+                            blurRadius: 20,
+                            offset: const Offset(0, -4),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(10, 6, 6, 2),
+                            child: Row(
+                              children: [
+                                const Spacer(),
+                                Container(
+                                  width: 42,
+                                  height: 4,
+                                  decoration: BoxDecoration(
+                                    color: Colors.white24,
+                                    borderRadius: BorderRadius.circular(99),
+                                  ),
+                                ),
+                                const Spacer(),
+                                IconButton(
+                                  key: const ValueKey<String>(
+                                    'mobile-coach-close',
+                                  ),
+                                  tooltip: 'Hide panel',
+                                  onPressed: _toggleMobilePanel,
+                                  icon: const Icon(Icons.keyboard_arrow_down),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Flexible(
+                            child: SingleChildScrollView(
+                              padding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
+                              child: Center(child: sidePanel),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                 ),
               ),
           ],

@@ -160,7 +160,7 @@ void main() {
       );
     });
 
-    test('completed real curriculum reports curriculum end', () {
+    test('completed real lesson 1 exposes lesson 2', () {
       final session = LessonSessionState(
         lesson: keySquaresLesson01,
         stage: LessonStage.completed,
@@ -171,6 +171,25 @@ void main() {
         session: session,
         currentFen: whiteToMoveFen,
         proofFen: whiteToMoveFen,
+        progression: LessonProgression(curriculum),
+      );
+
+      expect(experience.hasNextLesson, isTrue);
+      expect(experience.nextLesson, same(keySquaresLesson02));
+      expect(experience.isCurriculumEnd, isFalse);
+    });
+
+    test('completed real final lesson reports curriculum end', () {
+      final session = LessonSessionState(
+        lesson: keySquaresLesson02,
+        stage: LessonStage.completed,
+        outcome: LessonSessionOutcome.win,
+      );
+
+      final experience = builder.build(
+        session: session,
+        currentFen: keySquaresLesson02.fen,
+        proofFen: keySquaresLesson02.fen,
         progression: LessonProgression(curriculum),
       );
 

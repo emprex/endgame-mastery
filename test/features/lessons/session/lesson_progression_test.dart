@@ -55,10 +55,19 @@ void main() {
       expect(progression.firstLesson, same(keySquaresLesson01));
     });
 
-    test('current real curriculum has no next lesson yet', () {
+    test('current real curriculum advances from lesson 1 to lesson 2', () {
       final progression = LessonProgression(curriculum);
 
       final session = completedSessionFor(keySquaresLesson01);
+
+      expect(progression.hasNextLesson(session), isTrue);
+      expect(progression.nextLessonFor(session), same(keySquaresLesson02));
+    });
+
+    test('current final curriculum lesson has no next lesson', () {
+      final progression = LessonProgression(curriculum);
+
+      final session = completedSessionFor(keySquaresLesson02);
 
       expect(progression.hasNextLesson(session), isFalse);
       expect(progression.nextLessonFor(session), isNull);

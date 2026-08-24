@@ -44,6 +44,8 @@ class ChessController {
     game = chess.Chess.fromFEN(initialFen);
   }
 
+  String get fen => game.fen;
+
   bool isWhiteToMove() {
     return game.turn == chess.Color.WHITE;
   }

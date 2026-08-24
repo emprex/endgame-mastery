@@ -11,6 +11,19 @@ enum EngineSide {
   black,
 }
 
+/// Coordinates chess rules with an asynchronous chess engine.
+///
+/// Responsibilities:
+///
+/// - knows which side the engine plays;
+/// - prevents user input during the engine turn;
+/// - tracks position revisions;
+/// - rejects stale engine responses;
+/// - validates every engine move through ChessController;
+/// - handles reset while the engine is calculating;
+/// - handles engine timeout without leaving the UI locked.
+///
+/// Platform-specific Stockfish code does NOT belong here.
 class GameEngineController {
   GameEngineController({
     required this.chessController,
@@ -40,14 +53,15 @@ class GameEngineController {
 
   bool get engineBusy => _engineBusy;
 
+  bool get isDisposed => _disposed;
+
   EngineMove? get lastEngineMove =>
       _lastEngineMove;
-
-  bool get isDisposed => _disposed;
 
   int get positionRevision =>
       _positionRevision;
 
+  /// True when the current position belongs to the engine.
   bool get isEngineTurn {
     if (chessController.isGameOver()) {
       return false;
@@ -56,11 +70,13 @@ class GameEngineController {
     return switch (engineSide) {
       EngineSide.white =>
         chessController.isWhiteToMove(),
+
       EngineSide.black =>
         !chessController.isWhiteToMove(),
     };
   }
 
+  /// True when the current position belongs to the human player.
   bool get isUserTurn {
     if (chessController.isGameOver()) {
       return false;
@@ -68,6 +84,10 @@ class GameEngineController {
 
     return !isEngineTurn;
   }
+
+  // ---------------------------------------------------------------------------
+  // INITIALIZATION
+  // ---------------------------------------------------------------------------
 
   Future<void> initialize() async {
     _ensureNotDisposed();
@@ -83,6 +103,19 @@ class GameEngineController {
     _initialized = true;
   }
 
+  // ---------------------------------------------------------------------------
+  // USER MOVE
+  // ---------------------------------------------------------------------------
+
+  /// Applies the human move immediately.
+  ///
+  /// The engine search is deliberately NOT started here.
+  ///
+  /// This allows Flutter to repaint the board first:
+  ///
+  /// human move
+  /// -> visible immediately
+  /// -> engine search starts afterwards.
   bool playUserMove({
     required String from,
     required String to,
@@ -112,6 +145,10 @@ class GameEngineController {
     return true;
   }
 
+  // ---------------------------------------------------------------------------
+  // ENGINE MOVE
+  // ---------------------------------------------------------------------------
+
   Future<bool> requestEngineMove() async {
     _ensureNotDisposed();
     _ensureInitialized();
@@ -122,7 +159,8 @@ class GameEngineController {
       return false;
     }
 
-    final requestId = ++_requestId;
+    final requestId =
+        ++_requestId;
 
     final revisionAtStart =
         _positionRevision;
@@ -147,6 +185,21 @@ class GameEngineController {
             },
           );
 
+      // -----------------------------------------------------------------------
+      // STALE RESPONSE PROTECTION
+      // -----------------------------------------------------------------------
+      //
+      // The answer is discarded if anything changed while Stockfish
+      // was calculating.
+      //
+      // Examples:
+      //
+      // - Reset was pressed.
+      // - Another request replaced this one.
+      // - The board position changed.
+      // - The controller was disposed.
+      // - The game ended.
+
       if (_disposed ||
           requestId != _requestId ||
           revisionAtStart !=
@@ -158,8 +211,18 @@ class GameEngineController {
         return false;
       }
 
+      // -----------------------------------------------------------------------
+      // LEGALITY GATE
+      // -----------------------------------------------------------------------
+      //
+      // Even Stockfish output is never trusted blindly.
+      //
+      // Every returned move must pass ChessController / package:chess.
+
       final applied =
-          _applyEngineMove(move);
+          _applyEngineMove(
+        move,
+      );
 
       if (!applied) {
         throw EngineSearchException(
@@ -172,7 +235,33 @@ class GameEngineController {
       _positionRevision++;
 
       return true;
+    } on EngineTimeoutException {
+      // -----------------------------------------------------------------------
+      // TIMEOUT RECOVERY
+      // -----------------------------------------------------------------------
+      //
+      // Invalidate the timed-out request immediately.
+      //
+      // If Stockfish later emits a bestmove from that old search,
+      // GameEngineController will never apply it to the board.
+
+      if (requestId == _requestId) {
+        _requestId++;
+      }
+
+      _engineBusy = false;
+
+      // Ask the underlying engine to stop its old calculation.
+      //
+      // Stockfish remains alive and can be reused afterwards.
+      await engine.stop();
+
+      rethrow;
     } finally {
+      // Only the currently valid request is allowed to change
+      // the busy state here.
+      //
+      // Reset/stop/timeout may already have invalidated it.
       if (requestId == _requestId) {
         _engineBusy = false;
       }
@@ -189,10 +278,16 @@ class GameEngineController {
     );
   }
 
+  // ---------------------------------------------------------------------------
+  // RESET
+  // ---------------------------------------------------------------------------
+
   Future<void> reset() async {
     _ensureNotDisposed();
 
+    // Invalidate every result belonging to the previous position.
     _requestId++;
+
     _engineBusy = false;
 
     await engine.stop();
@@ -204,14 +299,23 @@ class GameEngineController {
     _positionRevision++;
   }
 
+  // ---------------------------------------------------------------------------
+  // STOP
+  // ---------------------------------------------------------------------------
+
   Future<void> stop() async {
     _ensureNotDisposed();
 
     _requestId++;
+
     _engineBusy = false;
 
     await engine.stop();
   }
+
+  // ---------------------------------------------------------------------------
+  // DISPOSE
+  // ---------------------------------------------------------------------------
 
   Future<void> dispose() async {
     if (_disposed) {
@@ -221,11 +325,17 @@ class GameEngineController {
     _disposed = true;
 
     _requestId++;
+
     _engineBusy = false;
 
     await engine.stop();
+
     await engine.dispose();
   }
+
+  // ---------------------------------------------------------------------------
+  // SAFETY
+  // ---------------------------------------------------------------------------
 
   void _ensureInitialized() {
     if (!_initialized) {

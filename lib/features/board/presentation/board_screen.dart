@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:chess_vectors_flutter/chess_vectors_flutter.dart';
 import 'package:endgame_mastery/core/chess/board_game_result.dart';
 import 'package:endgame_mastery/core/chess/chess_controller.dart';
+import 'package:endgame_mastery/core/chess/played_move.dart';
 import 'package:endgame_mastery/core/engine/engine_factory.dart';
 import 'package:endgame_mastery/core/game/game_engine_controller.dart';
 import 'package:endgame_mastery/features/board/presentation/chess_board.dart';
@@ -14,11 +15,13 @@ class BoardScreen extends StatefulWidget {
     this.pedagogicalSquares = const <String>{},
     this.onFenChanged,
     this.onGameEnded,
+    this.onMovePlayed,
   });
 
   final Set<String> pedagogicalSquares;
   final ValueChanged<String>? onFenChanged;
   final ValueChanged<BoardGameResult>? onGameEnded;
+  final ValueChanged<PlayedMove>? onMovePlayed;
 
   @override
   State<BoardScreen> createState() => _BoardScreenState();
@@ -83,6 +86,16 @@ class _BoardScreenState extends State<BoardScreen> {
 
   void _notifyFenChanged() {
     widget.onFenChanged?.call(controller.fen);
+  }
+
+  void _notifyMovePlayed({
+    required String from,
+    required String to,
+    String? promotion,
+  }) {
+    widget.onMovePlayed?.call(
+      PlayedMove(from: from, to: to, promotion: promotion),
+    );
   }
 
   void _notifyGameEndedIfNeeded() {
@@ -207,6 +220,8 @@ class _BoardScreenState extends State<BoardScreen> {
       engineError = null;
     });
 
+    _notifyMovePlayed(from: from, to: to, promotion: promotion);
+
     _notifyFenChanged();
 
     if (controller.isGameOver()) {
@@ -247,6 +262,14 @@ class _BoardScreenState extends State<BoardScreen> {
         lastTo = engineMove?.to;
         engineError = null;
       });
+
+      if (engineMove != null) {
+        _notifyMovePlayed(
+          from: engineMove.from,
+          to: engineMove.to,
+          promotion: engineMove.promotion,
+        );
+      }
 
       _notifyFenChanged();
       _notifyGameEndedIfNeeded();
@@ -499,7 +522,9 @@ class _BoardScreenState extends State<BoardScreen> {
                 constraints.maxWidth < 700 || constraints.maxHeight < 760;
 
             final double horizontalPadding = compact ? 10 : 18;
+
             final double headerHeight = compact ? 78 : 104;
+
             final double controlsHeight = compact ? 66 : 82;
 
             final double maxBoardWidth =

@@ -1,4 +1,5 @@
 import 'package:endgame_mastery/core/chess/board_game_result.dart';
+import 'package:endgame_mastery/core/chess/played_move.dart';
 import 'package:endgame_mastery/features/board/presentation/board_screen.dart';
 import 'package:endgame_mastery/features/lessons/data/pawn_endgame_hints.dart';
 import 'package:endgame_mastery/features/lessons/data/pawn_endgame_lessons.dart';
@@ -11,6 +12,7 @@ import 'package:endgame_mastery/features/lessons/presentation/widgets/lesson_res
 import 'package:endgame_mastery/features/lessons/session/lesson_experience_builder.dart';
 import 'package:endgame_mastery/features/lessons/session/lesson_hint_controller.dart';
 import 'package:endgame_mastery/features/lessons/session/lesson_hint_overlay_policy.dart';
+import 'package:endgame_mastery/features/lessons/session/lesson_move_explanation_controller.dart';
 import 'package:endgame_mastery/features/lessons/session/lesson_session_controller.dart';
 import 'package:endgame_mastery/features/lessons/session/lesson_session_outcome.dart';
 import 'package:endgame_mastery/features/lessons/session/lesson_session_state.dart';
@@ -38,6 +40,7 @@ class _LessonExperienceScreenState extends State<LessonExperienceScreen> {
 
   late final LessonSessionController _sessionController;
   late final LessonHintController _hintController;
+  late final LessonMoveExplanationController _moveExplanationController;
 
   late String _currentFen;
 
@@ -55,11 +58,18 @@ class _LessonExperienceScreenState extends State<LessonExperienceScreen> {
 
     _hintController = LessonHintController(hints: keySquaresLesson01Hints);
 
+    _moveExplanationController = LessonMoveExplanationController(
+      lesson: keySquaresLesson01,
+      initialFen: keySquaresLesson01.fen,
+    );
+
     _currentFen = keySquaresLesson01.fen;
   }
 
   void _startPractice() {
     _hintController.reset();
+    _moveExplanationController.reset(keySquaresLesson01.fen);
+
     _sessionController.startPractice();
 
     setState(() {});
@@ -67,6 +77,8 @@ class _LessonExperienceScreenState extends State<LessonExperienceScreen> {
 
   void _startProve() {
     _hintController.reset();
+    _moveExplanationController.reset(keySquaresLesson01.fen);
+
     _sessionController.startProve();
 
     setState(() {
@@ -78,6 +90,12 @@ class _LessonExperienceScreenState extends State<LessonExperienceScreen> {
 
   void _requestHint() {
     _hintController.revealNext();
+
+    setState(() {});
+  }
+
+  void _onBoardMovePlayed(PlayedMove move) {
+    _moveExplanationController.onMovePlayed(move);
 
     setState(() {});
   }
@@ -110,6 +128,8 @@ class _LessonExperienceScreenState extends State<LessonExperienceScreen> {
     if (_currentFen == fen) {
       return;
     }
+
+    _moveExplanationController.onFenChanged(fen);
 
     setState(() {
       _currentFen = fen;
@@ -146,12 +166,17 @@ class _LessonExperienceScreenState extends State<LessonExperienceScreen> {
 
     final presentation = _presenter.present(experience);
 
-    final showHintKeySquares = _hintOverlayPolicy.showKeySquares(
-      _hintController.level,
-    );
+    final hintStageSupportsOverlays =
+        stage == LessonStage.practice || stage == LessonStage.prove;
+
+    final showHintKeySquares =
+        hintStageSupportsOverlays &&
+        _hintOverlayPolicy.showKeySquares(_hintController.level);
 
     final showPedagogicalSquares =
         presentation.showLearnContent || showHintKeySquares;
+
+    final explanation = _moveExplanationController.latestExplanation;
 
     final board = IgnorePointer(
       key: const ValueKey<String>('lesson-board-interaction-gate'),
@@ -163,15 +188,20 @@ class _LessonExperienceScreenState extends State<LessonExperienceScreen> {
             pedagogicalSquares: showPedagogicalSquares
                 ? experience.teaching.keySquares
                 : const <String>{},
+            onMovePlayed: _onBoardMovePlayed,
             onFenChanged: _onBoardFenChanged,
             onGameEnded: _onBoardGameEnded,
           ),
     );
 
     final showLearnPanel = presentation.showLearnContent;
+
     final showPracticePanel = experience.stage == LessonStage.practice;
+
     final showProvePanel = experience.stage == LessonStage.prove;
+
     final showResultPanel = experience.stage == LessonStage.result;
+
     final showCompletedPanel = experience.stage == LessonStage.completed;
 
     Widget? sidePanel;
@@ -194,6 +224,8 @@ class _LessonExperienceScreenState extends State<LessonExperienceScreen> {
         hintProgressLabel: _hintProgressLabel,
         hintActionLabel: _hintActionLabel,
         onHintRequested: _hintActionLabel == null ? null : _requestHint,
+        explanationTitle: explanation?.title,
+        explanationMessage: explanation?.message,
       );
     } else if (showProvePanel) {
       sidePanel = LessonProvePanel(
@@ -203,6 +235,8 @@ class _LessonExperienceScreenState extends State<LessonExperienceScreen> {
         hintProgressLabel: _hintProgressLabel,
         hintActionLabel: _hintActionLabel,
         onHintRequested: _hintActionLabel == null ? null : _requestHint,
+        explanationTitle: explanation?.title,
+        explanationMessage: explanation?.message,
       );
     } else if (showResultPanel) {
       sidePanel = LessonResultPanel(

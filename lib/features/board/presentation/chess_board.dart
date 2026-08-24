@@ -11,6 +11,7 @@ class ChessBoard extends StatelessWidget {
     required this.lastFrom,
     required this.lastTo,
     required this.checkedSquare,
+    this.pedagogicalSquares = const <String>{},
     required this.pieceVisualAt,
     required this.canDragPieceAt,
     required this.onSquareTap,
@@ -24,6 +25,7 @@ class ChessBoard extends StatelessWidget {
   final String? lastFrom;
   final String? lastTo;
   final String? checkedSquare;
+  final Set<String> pedagogicalSquares;
 
   final BoardPieceVisual? Function(String square) pieceVisualAt;
   final bool Function(String square) canDragPieceAt;
@@ -31,10 +33,8 @@ class ChessBoard extends StatelessWidget {
   final void Function(String square) onSquareTap;
   final void Function(String square) onPieceDragStart;
 
-  final Future<void> Function({
-    required String from,
-    required String to,
-  }) onPieceDropped;
+  final Future<void> Function({required String from, required String to})
+  onPieceDropped;
 
   @override
   Widget build(BuildContext context) {
@@ -44,80 +44,49 @@ class ChessBoard extends StatelessWidget {
 
         return Stack(
           children: [
-            for (int displayRank = 0;
-                displayRank < 8;
-                displayRank++)
-              for (int displayFile = 0;
-                  displayFile < 8;
-                  displayFile++)
-                _buildSquare(
-                  displayRank,
-                  displayFile,
-                  squareSize,
-                ),
+            for (int displayRank = 0; displayRank < 8; displayRank++)
+              for (int displayFile = 0; displayFile < 8; displayFile++)
+                _buildSquare(displayRank, displayFile, squareSize),
           ],
         );
       },
     );
   }
 
-  Widget _buildSquare(
-    int displayRank,
-    int displayFile,
-    double squareSize,
-  ) {
-    final boardFile =
-        whiteBottom
-            ? displayFile
-            : 7 - displayFile;
+  Widget _buildSquare(int displayRank, int displayFile, double squareSize) {
+    final boardFile = whiteBottom ? displayFile : 7 - displayFile;
 
-    final boardRank =
-        whiteBottom
-            ? 7 - displayRank
-            : displayRank;
+    final boardRank = whiteBottom ? 7 - displayRank : displayRank;
 
-    final fileChar =
-        String.fromCharCode(
-      'a'.codeUnitAt(0) + boardFile,
-    );
+    final fileChar = String.fromCharCode('a'.codeUnitAt(0) + boardFile);
 
     final rankNumber = boardRank + 1;
     final square = '$fileChar$rankNumber';
 
-    final isLight =
-        (boardFile + boardRank).isOdd;
+    final isLight = (boardFile + boardRank).isOdd;
 
-    final isSelected =
-        selectedSquare == square;
+    final isSelected = selectedSquare == square;
 
-    final isLegal =
-        legalTargets.contains(square);
+    final isLegal = legalTargets.contains(square);
 
-    final isLastMove =
-        lastFrom == square ||
-        lastTo == square;
+    final isLastMove = lastFrom == square || lastTo == square;
 
-    final isChecked =
-        checkedSquare == square;
+    final isChecked = checkedSquare == square;
 
-    final visual =
-        pieceVisualAt(square);
+    final isPedagogical = pedagogicalSquares.contains(square);
+
+    final visual = pieceVisualAt(square);
 
     Color background;
 
     if (isChecked) {
-      background =
-          const Color(0xFFD9524F);
+      background = const Color(0xFFD9524F);
     } else if (isSelected) {
-      background =
-          const Color(0xFFF6F669);
+      background = const Color(0xFFF6F669);
     } else if (isLastMove) {
-      background =
-          const Color(0xFFCDD26A);
+      background = const Color(0xFFCDD26A);
     } else {
-      background = isLight
-          ? const Color(0xFFE6D3A3)
-          : const Color(0xFF769656);
+      background = isLight ? const Color(0xFFE6D3A3) : const Color(0xFF769656);
     }
 
     return Positioned(
@@ -126,87 +95,67 @@ class ChessBoard extends StatelessWidget {
       width: squareSize,
       height: squareSize,
       child: DragTarget<String>(
-        onWillAcceptWithDetails:
-            (details) {
-          return legalTargets
-              .contains(square);
+        onWillAcceptWithDetails: (details) {
+          return legalTargets.contains(square);
         },
-        onAcceptWithDetails:
-            (details) {
-          onPieceDropped(
-            from: details.data,
-            to: square,
-          );
+        onAcceptWithDetails: (details) {
+          onPieceDropped(from: details.data, to: square);
         },
-        builder: (
-          context,
-          candidateData,
-          rejectedData,
-        ) {
+        builder: (context, candidateData, rejectedData) {
           return GestureDetector(
-            behavior:
-                HitTestBehavior.opaque,
-            onTap: () =>
-                onSquareTap(square),
+            behavior: HitTestBehavior.opaque,
+            onTap: () => onSquareTap(square),
             child: ColoredBox(
               color: background,
               child: Stack(
                 children: [
+                  if (isPedagogical)
+                    Positioned.fill(
+                      child: IgnorePointer(
+                        child: Container(
+                          key: ValueKey<String>('pedagogical-square-$square'),
+                          margin: EdgeInsets.all(squareSize * 0.08),
+                          decoration: BoxDecoration(
+                            border: Border.all(
+                              color: const Color(0xFFE8C76A),
+                              width: squareSize * 0.055,
+                            ),
+                            borderRadius: BorderRadius.circular(
+                              squareSize * 0.10,
+                            ),
+                            color: const Color(0xFFE8C76A)
+                                .withValues(alpha: 0.20),
+                          ),
+                        ),
+                      ),
+                    ),
+
                   if (visual != null)
                     Center(
-                      child:
-                          canDragPieceAt(
-                                  square)
-                              ? Draggable<String>(
-                                  data:
-                                      square,
-                                  onDragStarted:
-                                      () {
-                                    onPieceDragStart(
-                                        square);
-                                  },
-                                  feedback:
-                                      Material(
-                                    color: Colors
-                                        .transparent,
-                                    child:
-                                        _pieceWidget(
-                                      visual,
-                                      squareSize,
-                                    ),
-                                  ),
-                                  childWhenDragging:
-                                      const SizedBox
-                                          .shrink(),
-                                  child:
-                                      _pieceWidget(
-                                    visual,
-                                    squareSize,
-                                  ),
-                                )
-                              : _pieceWidget(
-                                  visual,
-                                  squareSize,
-                                ),
+                      child: canDragPieceAt(square)
+                          ? Draggable<String>(
+                              data: square,
+                              onDragStarted: () {
+                                onPieceDragStart(square);
+                              },
+                              feedback: Material(
+                                color: Colors.transparent,
+                                child: _pieceWidget(visual, squareSize),
+                              ),
+                              childWhenDragging: const SizedBox.shrink(),
+                              child: _pieceWidget(visual, squareSize),
+                            )
+                          : _pieceWidget(visual, squareSize),
                     ),
 
                   if (isLegal)
                     Center(
                       child: Container(
-                        width:
-                            squareSize *
-                                0.23,
-                        height:
-                            squareSize *
-                                0.23,
-                        decoration:
-                            BoxDecoration(
-                          color: Colors.black
-                              .withValues(
-                            alpha: 0.23,
-                          ),
-                          shape:
-                              BoxShape.circle,
+                        width: squareSize * 0.23,
+                        height: squareSize * 0.23,
+                        decoration: BoxDecoration(
+                          color: Colors.black.withValues(alpha: 0.23),
+                          shape: BoxShape.circle,
                         ),
                       ),
                     ),
@@ -218,16 +167,11 @@ class ChessBoard extends StatelessWidget {
                       child: Text(
                         '$rankNumber',
                         style: TextStyle(
-                          fontSize:
-                              squareSize *
-                                  0.16,
-                          fontWeight:
-                              FontWeight.w700,
+                          fontSize: squareSize * 0.16,
+                          fontWeight: FontWeight.w700,
                           color: isLight
-                              ? const Color(
-                                  0xFF769656)
-                              : const Color(
-                                  0xFFE6D3A3),
+                              ? const Color(0xFF769656)
+                              : const Color(0xFFE6D3A3),
                         ),
                       ),
                     ),
@@ -239,16 +183,11 @@ class ChessBoard extends StatelessWidget {
                       child: Text(
                         fileChar,
                         style: TextStyle(
-                          fontSize:
-                              squareSize *
-                                  0.16,
-                          fontWeight:
-                              FontWeight.w700,
+                          fontSize: squareSize * 0.16,
+                          fontWeight: FontWeight.w700,
                           color: isLight
-                              ? const Color(
-                                  0xFF769656)
-                              : const Color(
-                                  0xFFE6D3A3),
+                              ? const Color(0xFF769656)
+                              : const Color(0xFFE6D3A3),
                         ),
                       ),
                     ),
@@ -261,43 +200,27 @@ class ChessBoard extends StatelessWidget {
     );
   }
 
-  Widget _pieceWidget(
-    BoardPieceVisual visual,
-    double squareSize,
-  ) {
-    final size =
-        squareSize * 0.84;
+  Widget _pieceWidget(BoardPieceVisual visual, double squareSize) {
+    final size = squareSize * 0.84;
 
     if (visual.isWhite) {
       return switch (visual.type) {
-        BoardPieceType.king =>
-          WhiteKing(size: size),
-        BoardPieceType.queen =>
-          WhiteQueen(size: size),
-        BoardPieceType.rook =>
-          WhiteRook(size: size),
-        BoardPieceType.bishop =>
-          WhiteBishop(size: size),
-        BoardPieceType.knight =>
-          WhiteKnight(size: size),
-        BoardPieceType.pawn =>
-          WhitePawn(size: size),
+        BoardPieceType.king => WhiteKing(size: size),
+        BoardPieceType.queen => WhiteQueen(size: size),
+        BoardPieceType.rook => WhiteRook(size: size),
+        BoardPieceType.bishop => WhiteBishop(size: size),
+        BoardPieceType.knight => WhiteKnight(size: size),
+        BoardPieceType.pawn => WhitePawn(size: size),
       };
     }
 
     return switch (visual.type) {
-      BoardPieceType.king =>
-        BlackKing(size: size),
-      BoardPieceType.queen =>
-        BlackQueen(size: size),
-      BoardPieceType.rook =>
-        BlackRook(size: size),
-      BoardPieceType.bishop =>
-        BlackBishop(size: size),
-      BoardPieceType.knight =>
-        BlackKnight(size: size),
-      BoardPieceType.pawn =>
-        BlackPawn(size: size),
+      BoardPieceType.king => BlackKing(size: size),
+      BoardPieceType.queen => BlackQueen(size: size),
+      BoardPieceType.rook => BlackRook(size: size),
+      BoardPieceType.bishop => BlackBishop(size: size),
+      BoardPieceType.knight => BlackKnight(size: size),
+      BoardPieceType.pawn => BlackPawn(size: size),
     };
   }
 }

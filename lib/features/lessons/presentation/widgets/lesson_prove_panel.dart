@@ -9,6 +9,8 @@ class LessonProvePanel extends StatelessWidget {
     this.hintProgressLabel,
     this.hintActionLabel,
     this.onHintRequested,
+    this.explanationTitle,
+    this.explanationMessage,
   });
 
   final String stageLabel;
@@ -18,6 +20,13 @@ class LessonProvePanel extends StatelessWidget {
   final String? hintProgressLabel;
   final String? hintActionLabel;
   final VoidCallback? onHintRequested;
+
+  final String? explanationTitle;
+  final String? explanationMessage;
+
+  bool get _hasExplanation {
+    return explanationTitle != null && explanationMessage != null;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -71,6 +80,55 @@ class LessonProvePanel extends StatelessWidget {
                 color: Colors.white70,
               ),
             ),
+            if (_hasExplanation) ...[
+              const SizedBox(height: 16),
+              Container(
+                key: const ValueKey<String>('lesson-move-explanation'),
+                width: double.infinity,
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE8C76A).withValues(alpha: 0.10),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: const Color(0xFFE8C76A).withValues(alpha: 0.28),
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'COACHING',
+                      style: theme.textTheme.labelMedium?.copyWith(
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 1.1,
+                        color: const Color(0xFFE8C76A),
+                      ),
+                    ),
+                    const SizedBox(height: 7),
+                    Text(
+                      explanationTitle!,
+                      key: const ValueKey<String>(
+                        'lesson-move-explanation-title',
+                      ),
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      explanationMessage!,
+                      key: const ValueKey<String>(
+                        'lesson-move-explanation-message',
+                      ),
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        height: 1.4,
+                        color: Colors.white.withValues(alpha: 0.90),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
             if (hintText != null) ...[
               const SizedBox(height: 16),
               Container(

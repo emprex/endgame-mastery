@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+
+  <title>
+    Endgame Mastery — Stockfish Worker Test
+  </title>
+
+  <style>
+    body {
+      background: #18171c;
+      color: #ffffff;
+      font-family: monospace;
+      padding: 24px;
+    }
+
+    #output {
+      white-space: pre-wrap;
+      line-height: 1.5;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>
+    Endgame Mastery — Stockfish Test
+  </h1>
+
+  <div id="output">
+    Starting Stockfish...
+  </div>
+
+  <script>
+    /*
+     * PHASE 2.4B — isolated Stockfish test
+     *
+     * Important:
+     *
+     * Stockfish.js itself is the WebWorker.
+     *
+     * We do NOT place another JavaScript wrapper around it.
+     * This lets Stockfish correctly resolve its companion
+     * WebAssembly file.
+     */
+
+    const output =
+      document.getElementById('output');
+
+    function log(message) {
+      output.textContent +=
+        '\n' + message;
+
+      console.log(message);
+    }
+
+    /*
+     * Stockfish.js supports specifying the WASM file
+     * through the worker URL fragment.
+     *
+     * JS path:
+     *   stockfish/stockfish-18-lite-single.js
+     *
+     * WASM path:
+     *   stockfish/stockfish-18-lite-single.wasm
+     */
+    const worker = new Worker(
+      'stockfish/stockfish-18-lite-single.js' +
+      '#stockfish-18-lite-single.wasm'
+    );
+
+    worker.onmessage = (event) => {
+      const line =
+        String(event.data);
+
+      log('<< ' + line);
+
+      /*
+       * UCI handshake complete.
+       */
+      if (line === 'uciok') {
+        log('>> isready');
+
+        worker.postMessage(
+          'isready'
+        );
+
+        return;
+      }
+
+      /*
+       * Engine is ready.
+       *
+       * Test the exact Endgame Mastery starting FEN.
+       */
+      if (line === 'readyok') {
+        const fen =
+          '8/3k4/8/3K4/3P4/8/8/8 w - - 0 1';
+
+        log(
+          '>> position fen ' +
+          fen
+        );
+
+        worker.postMessage(
+          'position fen ' +
+          fen
+        );
+
+        log(
+          '>> go movetime 250'
+        );
+
+        worker.postMessage(
+          'go movetime 250'
+        );
+
+        return;
+      }
+
+      /*
+       * This is the milestone we need.
+       */
+      if (
+        line.startsWith(
+          'bestmove '
+        )
+      ) {
+        log('');
+        log(
+          'SUCCESS: Stockfish returned a move.'
+        );
+      }
+    };
+
+    worker.onerror = (error) => {
+      log('');
+
+      log(
+        'WORKER ERROR: ' +
+        error.message
+      );
+    };
+
+    /*
+     * Begin UCI initialization.
+     */
+    log('>> uci');
+
+    worker.postMessage(
+      'uci'
+    );
+  </script>
+</body>
+</html>

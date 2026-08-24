@@ -41,6 +41,7 @@ dependencies:
   collection: ^1.19.1
   just_audio: ^0.10.6
   chess_vectors_flutter: ^1.1.0
+  web: ^1.1.1
 
 dev_dependencies:
   flutter_test:

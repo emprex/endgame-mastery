@@ -2,7 +2,7 @@ import 'dart:math' as math;
 
 import 'package:chess_vectors_flutter/chess_vectors_flutter.dart';
 import 'package:endgame_mastery/core/chess/chess_controller.dart';
-import 'package:endgame_mastery/core/engine/legal_move_test_engine.dart';
+import 'package:endgame_mastery/core/engine/engine_factory.dart';
 import 'package:endgame_mastery/core/game/game_engine_controller.dart';
 import 'package:endgame_mastery/features/board/presentation/chess_board.dart';
 import 'package:flutter/material.dart';
@@ -69,7 +69,7 @@ class _BoardScreenState extends State<BoardScreen> {
     gameEngineController =
         GameEngineController(
       chessController: controller,
-      engine: LegalMoveTestEngine(),
+      engine: createChessEngine(),
       engineSide: EngineSide.black,
     );
 

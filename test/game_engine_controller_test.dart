@@ -71,7 +71,7 @@ void main() {
   );
 
   test(
-    'white move triggers black engine request',
+    'user move is applied before engine search',
     () async {
       final engine =
           FakeChessEngine();
@@ -88,11 +88,74 @@ void main() {
 
       await game.initialize();
 
-      final future =
+      final moved =
           game.playUserMove(
         from: 'd5',
         to: 'c5',
       );
+
+      expect(
+        moved,
+        isTrue,
+      );
+
+      expect(
+        chessController
+            .pieceVisualAt('c5'),
+        isNotNull,
+      );
+
+      expect(
+        chessController
+            .pieceVisualAt('d5'),
+        isNull,
+      );
+
+      expect(
+        game.isEngineTurn,
+        isTrue,
+      );
+
+      expect(
+        game.engineBusy,
+        isFalse,
+      );
+
+      expect(
+        engine.pendingSearches,
+        isEmpty,
+      );
+    },
+  );
+
+  test(
+    'explicit engine request applies black move',
+    () async {
+      final engine =
+          FakeChessEngine();
+
+      final chessController =
+          ChessController();
+
+      final game =
+          GameEngineController(
+        chessController:
+            chessController,
+        engine: engine,
+      );
+
+      await game.initialize();
+
+      expect(
+        game.playUserMove(
+          from: 'd5',
+          to: 'c5',
+        ),
+        isTrue,
+      );
+
+      final future =
+          game.requestEngineMove();
 
       await Future<void>.delayed(
         Duration.zero,
@@ -163,19 +226,19 @@ void main() {
 
       await game.initialize();
 
-      final future =
-          game.playUserMove(
-        from: 'd5',
-        to: 'c5',
+      expect(
+        game.playUserMove(
+          from: 'd5',
+          to: 'c5',
+        ),
+        isTrue,
       );
+
+      final future =
+          game.requestEngineMove();
 
       await Future<void>.delayed(
         Duration.zero,
-      );
-
-      expect(
-        engine.pendingSearches.length,
-        1,
       );
 
       await game.reset();
@@ -188,7 +251,16 @@ void main() {
         ),
       );
 
-      await future;
+      expect(
+        await future,
+        isFalse,
+      );
+
+      expect(
+        chessController
+            .pieceVisualAt('d5'),
+        isNotNull,
+      );
 
       expect(
         chessController
@@ -201,16 +273,11 @@ void main() {
             .pieceVisualAt('c7'),
         isNull,
       );
-
-      expect(
-        chessController.isWhiteToMove(),
-        isTrue,
-      );
     },
   );
 
   test(
-    'user cannot move while engine is thinking',
+    'user cannot move during active engine search',
     () async {
       final engine =
           FakeChessEngine();
@@ -227,11 +294,16 @@ void main() {
 
       await game.initialize();
 
-      final firstMove =
-          game.playUserMove(
-        from: 'd5',
-        to: 'c5',
+      expect(
+        game.playUserMove(
+          from: 'd5',
+          to: 'c5',
+        ),
+        isTrue,
       );
+
+      final engineFuture =
+          game.requestEngineMove();
 
       await Future<void>.delayed(
         Duration.zero,
@@ -242,14 +314,14 @@ void main() {
         isTrue,
       );
 
-      final secondMove =
-          await game.playUserMove(
+      final illegalUserTurn =
+          game.playUserMove(
         from: 'd4',
         to: 'd5',
       );
 
       expect(
-        secondMove,
+        illegalUserTurn,
         isFalse,
       );
 
@@ -261,7 +333,7 @@ void main() {
         ),
       );
 
-      await firstMove;
+      await engineFuture;
 
       expect(
         game.engineBusy,
@@ -271,7 +343,7 @@ void main() {
   );
 
   test(
-    'dispose invalidates pending engine response',
+    'dispose rejects stale engine response',
     () async {
       final engine =
           FakeChessEngine();
@@ -288,11 +360,16 @@ void main() {
 
       await game.initialize();
 
-      final future =
-          game.playUserMove(
-        from: 'd5',
-        to: 'c5',
+      expect(
+        game.playUserMove(
+          from: 'd5',
+          to: 'c5',
+        ),
+        isTrue,
       );
+
+      final future =
+          game.requestEngineMove();
 
       await Future<void>.delayed(
         Duration.zero,
@@ -308,7 +385,10 @@ void main() {
         ),
       );
 
-      await future;
+      expect(
+        await future,
+        isFalse,
+      );
 
       expect(
         engine.disposed,

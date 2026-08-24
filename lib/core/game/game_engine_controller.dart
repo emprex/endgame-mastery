@@ -56,6 +56,14 @@ class GameEngineController {
     };
   }
 
+  bool get isUserTurn {
+    if (chessController.isGameOver()) {
+      return false;
+    }
+
+    return !isEngineTurn;
+  }
+
   Future<void> initialize() async {
     _ensureNotDisposed();
 
@@ -70,22 +78,17 @@ class GameEngineController {
     _initialized = true;
   }
 
-  Future<bool> playUserMove({
+  bool playUserMove({
     required String from,
     required String to,
     String? promotion,
-  }) async {
+  }) {
     _ensureNotDisposed();
-
-    if (!_initialized) {
-      throw StateError(
-        'GameEngineController must be initialized first.',
-      );
-    }
+    _ensureInitialized();
 
     if (_engineBusy ||
         chessController.isGameOver() ||
-        isEngineTurn) {
+        !isUserTurn) {
       return false;
     }
 
@@ -101,22 +104,12 @@ class GameEngineController {
 
     _positionRevision++;
 
-    if (!chessController.isGameOver() &&
-        isEngineTurn) {
-      await requestEngineMove();
-    }
-
     return true;
   }
 
   Future<bool> requestEngineMove() async {
     _ensureNotDisposed();
-
-    if (!_initialized) {
-      throw StateError(
-        'GameEngineController must be initialized first.',
-      );
-    }
+    _ensureInitialized();
 
     if (_engineBusy ||
         chessController.isGameOver() ||
@@ -125,8 +118,10 @@ class GameEngineController {
     }
 
     final requestId = ++_requestId;
+
     final revisionAtStart =
         _positionRevision;
+
     final fenAtStart =
         chessController.fen;
 
@@ -215,11 +210,20 @@ class GameEngineController {
     }
 
     _disposed = true;
+
     _requestId++;
     _engineBusy = false;
 
     await engine.stop();
     await engine.dispose();
+  }
+
+  void _ensureInitialized() {
+    if (!_initialized) {
+      throw StateError(
+        'GameEngineController must be initialized first.',
+      );
+    }
   }
 
   void _ensureNotDisposed() {

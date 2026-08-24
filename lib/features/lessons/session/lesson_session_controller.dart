@@ -1,3 +1,4 @@
+import 'lesson_session_outcome.dart';
 import 'lesson_session_state.dart';
 import 'lesson_stage.dart';
 
@@ -8,7 +9,7 @@ import 'lesson_stage.dart';
 /// Learn -> Practice -> Prove -> Result -> Completed
 ///
 /// Entering Prove does not automatically create a Result.
-/// [completeProof] must be called explicitly.
+/// [completeProof] must be called explicitly with the actual session outcome.
 ///
 /// This controller deliberately contains no:
 /// - Stockfish logic
@@ -39,11 +40,19 @@ class LessonSessionController {
 
   /// Explicitly completes the proof session and enters Result.
   ///
-  /// The actual chess result is intentionally not calculated here.
-  void completeProof() {
+  /// [outcome] is the result that actually occurred during the played proof.
+  ///
+  /// This controller does not calculate that result. A future gameplay
+  /// integration layer will supply it once the chess session has genuinely
+  /// ended.
+  void completeProof(LessonSessionOutcome outcome) {
     _requireStage(LessonStage.prove, action: 'complete proof');
 
-    _setStage(LessonStage.result);
+    _state = LessonSessionState(
+      lesson: _state.lesson,
+      stage: LessonStage.result,
+      outcome: outcome,
+    );
   }
 
   /// Marks the lesson session as completed after the Result stage.

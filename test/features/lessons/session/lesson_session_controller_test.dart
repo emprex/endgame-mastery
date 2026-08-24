@@ -1,5 +1,6 @@
 import 'package:endgame_mastery/features/lessons/data/pawn_endgame_lessons.dart';
 import 'package:endgame_mastery/features/lessons/session/lesson_session_controller.dart';
+import 'package:endgame_mastery/features/lessons/session/lesson_session_outcome.dart';
 import 'package:endgame_mastery/features/lessons/session/lesson_session_state.dart';
 import 'package:endgame_mastery/features/lessons/session/lesson_stage.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -11,12 +12,22 @@ void main() {
     );
   }
 
+  LessonSessionController createProveController() {
+    final controller = createController();
+
+    controller.startPractice();
+    controller.startProve();
+
+    return controller;
+  }
+
   group('LessonSessionState', () {
-    test('initial session starts in Learn', () {
+    test('initial session starts in Learn without an outcome', () {
       final state = LessonSessionState.initial(keySquaresLesson01);
 
       expect(state.lesson, same(keySquaresLesson01));
       expect(state.stage, LessonStage.learn);
+      expect(state.outcome, isNull);
     });
 
     test('copyWith preserves the lesson', () {
@@ -26,7 +37,56 @@ void main() {
 
       expect(updated.lesson, same(keySquaresLesson01));
       expect(updated.stage, LessonStage.practice);
+      expect(updated.outcome, isNull);
       expect(initial.stage, LessonStage.learn);
+    });
+
+    test('rejects Result without an outcome', () {
+      expect(
+        () => LessonSessionState(
+          lesson: keySquaresLesson01,
+          stage: LessonStage.result,
+        ),
+        throwsArgumentError,
+      );
+    });
+
+    test('rejects Completed without an outcome', () {
+      expect(
+        () => LessonSessionState(
+          lesson: keySquaresLesson01,
+          stage: LessonStage.completed,
+        ),
+        throwsArgumentError,
+      );
+    });
+
+    test('rejects an outcome before Result', () {
+      for (final stage in <LessonStage>[
+        LessonStage.learn,
+        LessonStage.practice,
+        LessonStage.prove,
+      ]) {
+        expect(
+          () => LessonSessionState(
+            lesson: keySquaresLesson01,
+            stage: stage,
+            outcome: LessonSessionOutcome.draw,
+          ),
+          throwsArgumentError,
+        );
+      }
+    });
+
+    test('accepts Result with an outcome', () {
+      final state = LessonSessionState(
+        lesson: keySquaresLesson01,
+        stage: LessonStage.result,
+        outcome: LessonSessionOutcome.draw,
+      );
+
+      expect(state.stage, LessonStage.result);
+      expect(state.outcome, LessonSessionOutcome.draw);
     });
   });
 
@@ -37,6 +97,7 @@ void main() {
       controller.startPractice();
 
       expect(controller.state.stage, LessonStage.practice);
+      expect(controller.state.outcome, isNull);
     });
 
     test('Practice -> Prove', () {
@@ -46,42 +107,58 @@ void main() {
       controller.startProve();
 
       expect(controller.state.stage, LessonStage.prove);
+      expect(controller.state.outcome, isNull);
     });
 
     test('Prove does not automatically become Result', () {
-      final controller = createController();
-
-      controller.startPractice();
-      controller.startProve();
+      final controller = createProveController();
 
       expect(controller.state.stage, LessonStage.prove);
+      expect(controller.state.outcome, isNull);
     });
 
-    test('Prove -> Result only through explicit proof completion', () {
-      final controller = createController();
+    test('Prove -> Result stores explicit win outcome', () {
+      final controller = createProveController();
 
-      controller.startPractice();
-      controller.startProve();
-      controller.completeProof();
+      controller.completeProof(LessonSessionOutcome.win);
 
       expect(controller.state.stage, LessonStage.result);
+      expect(controller.state.outcome, LessonSessionOutcome.win);
     });
 
-    test('Result -> Completed', () {
-      final controller = createController();
+    test('Prove -> Result stores explicit draw outcome', () {
+      final controller = createProveController();
 
-      controller.startPractice();
-      controller.startProve();
-      controller.completeProof();
+      controller.completeProof(LessonSessionOutcome.draw);
+
+      expect(controller.state.stage, LessonStage.result);
+      expect(controller.state.outcome, LessonSessionOutcome.draw);
+    });
+
+    test('Prove -> Result stores explicit loss outcome', () {
+      final controller = createProveController();
+
+      controller.completeProof(LessonSessionOutcome.loss);
+
+      expect(controller.state.stage, LessonStage.result);
+      expect(controller.state.outcome, LessonSessionOutcome.loss);
+    });
+
+    test('Result -> Completed preserves the proof outcome', () {
+      final controller = createProveController();
+
+      controller.completeProof(LessonSessionOutcome.draw);
       controller.completeLesson();
 
       expect(controller.state.stage, LessonStage.completed);
+      expect(controller.state.outcome, LessonSessionOutcome.draw);
     });
 
-    test('full lifecycle follows Learn Practice Prove Result Completed', () {
+    test('full lifecycle preserves explicit session outcome', () {
       final controller = createController();
 
       expect(controller.state.stage, LessonStage.learn);
+      expect(controller.state.outcome, isNull);
 
       controller.startPractice();
       expect(controller.state.stage, LessonStage.practice);
@@ -89,11 +166,13 @@ void main() {
       controller.startProve();
       expect(controller.state.stage, LessonStage.prove);
 
-      controller.completeProof();
+      controller.completeProof(LessonSessionOutcome.win);
       expect(controller.state.stage, LessonStage.result);
+      expect(controller.state.outcome, LessonSessionOutcome.win);
 
       controller.completeLesson();
       expect(controller.state.stage, LessonStage.completed);
+      expect(controller.state.outcome, LessonSessionOutcome.win);
     });
   });
 
@@ -109,15 +188,27 @@ void main() {
     test('cannot complete proof from Learn', () {
       final controller = createController();
 
-      expect(controller.completeProof, throwsStateError);
+      expect(
+        () => controller.completeProof(LessonSessionOutcome.draw),
+        throwsStateError,
+      );
 
       expect(controller.state.stage, LessonStage.learn);
+      expect(controller.state.outcome, isNull);
     });
 
-    test('cannot complete lesson from Learn', () {
+    test('cannot complete proof from Practice', () {
       final controller = createController();
 
-      expect(controller.completeLesson, throwsStateError);
+      controller.startPractice();
+
+      expect(
+        () => controller.completeProof(LessonSessionOutcome.draw),
+        throwsStateError,
+      );
+
+      expect(controller.state.stage, LessonStage.practice);
+      expect(controller.state.outcome, isNull);
     });
 
     test('cannot start Practice twice', () {
@@ -130,21 +221,8 @@ void main() {
       expect(controller.state.stage, LessonStage.practice);
     });
 
-    test('cannot complete proof from Practice', () {
-      final controller = createController();
-
-      controller.startPractice();
-
-      expect(controller.completeProof, throwsStateError);
-
-      expect(controller.state.stage, LessonStage.practice);
-    });
-
     test('cannot start Practice from Prove', () {
-      final controller = createController();
-
-      controller.startPractice();
-      controller.startProve();
+      final controller = createProveController();
 
       expect(controller.startPractice, throwsStateError);
 
@@ -152,22 +230,31 @@ void main() {
     });
 
     test('cannot complete lesson directly from Prove', () {
-      final controller = createController();
-
-      controller.startPractice();
-      controller.startProve();
+      final controller = createProveController();
 
       expect(controller.completeLesson, throwsStateError);
 
       expect(controller.state.stage, LessonStage.prove);
     });
 
-    test('cannot return to Practice from Result', () {
-      final controller = createController();
+    test('cannot complete proof twice', () {
+      final controller = createProveController();
 
-      controller.startPractice();
-      controller.startProve();
-      controller.completeProof();
+      controller.completeProof(LessonSessionOutcome.draw);
+
+      expect(
+        () => controller.completeProof(LessonSessionOutcome.win),
+        throwsStateError,
+      );
+
+      expect(controller.state.stage, LessonStage.result);
+      expect(controller.state.outcome, LessonSessionOutcome.draw);
+    });
+
+    test('cannot return to Practice from Result', () {
+      final controller = createProveController();
+
+      controller.completeProof(LessonSessionOutcome.draw);
 
       expect(controller.startPractice, throwsStateError);
 
@@ -175,19 +262,21 @@ void main() {
     });
 
     test('completed session rejects every transition', () {
-      final controller = createController();
+      final controller = createProveController();
 
-      controller.startPractice();
-      controller.startProve();
-      controller.completeProof();
+      controller.completeProof(LessonSessionOutcome.draw);
       controller.completeLesson();
 
       expect(controller.startPractice, throwsStateError);
       expect(controller.startProve, throwsStateError);
-      expect(controller.completeProof, throwsStateError);
+      expect(
+        () => controller.completeProof(LessonSessionOutcome.win),
+        throwsStateError,
+      );
       expect(controller.completeLesson, throwsStateError);
 
       expect(controller.state.stage, LessonStage.completed);
+      expect(controller.state.outcome, LessonSessionOutcome.draw);
     });
   });
 }

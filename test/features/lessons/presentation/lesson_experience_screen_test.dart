@@ -107,4 +107,48 @@ void main() {
 
     expect(find.byKey(const ValueKey<String>('test-board')), findsOneWidget);
   });
+
+  testWidgets('Practice exposes Start Prove and advances to Prove', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1280, 900);
+    tester.view.devicePixelRatio = 1;
+
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+
+    await tester.pumpWidget(buildScreen());
+
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Start Practice'));
+
+    await tester.pumpAndSettle();
+
+    expect(find.text('PRACTICE'), findsOneWidget);
+
+    expect(find.text('Start Prove'), findsOneWidget);
+
+    final gateDuringPractice = tester.widget<IgnorePointer>(
+      find.byKey(const ValueKey<String>('lesson-board-interaction-gate')),
+    );
+
+    expect(gateDuringPractice.ignoring, isFalse);
+
+    await tester.tap(find.text('Start Prove'));
+
+    await tester.pumpAndSettle();
+
+    expect(find.text('PRACTICE'), findsNothing);
+
+    expect(find.text('Start Prove'), findsNothing);
+
+    final gateDuringProve = tester.widget<IgnorePointer>(
+      find.byKey(const ValueKey<String>('lesson-board-interaction-gate')),
+    );
+
+    expect(gateDuringProve.ignoring, isFalse);
+  });
 }

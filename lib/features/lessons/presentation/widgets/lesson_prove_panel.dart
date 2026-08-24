@@ -11,6 +11,8 @@ class LessonProvePanel extends StatelessWidget {
     this.onHintRequested,
     this.explanationTitle,
     this.explanationMessage,
+    this.assessmentTitle,
+    this.assessmentMessage,
   });
 
   final String stageLabel;
@@ -24,9 +26,14 @@ class LessonProvePanel extends StatelessWidget {
   final String? explanationTitle;
   final String? explanationMessage;
 
-  bool get _hasExplanation {
-    return explanationTitle != null && explanationMessage != null;
-  }
+  final String? assessmentTitle;
+  final String? assessmentMessage;
+
+  bool get _hasExplanation =>
+      explanationTitle != null && explanationMessage != null;
+
+  bool get _hasAssessment =>
+      assessmentTitle != null && assessmentMessage != null;
 
   @override
   Widget build(BuildContext context) {
@@ -42,7 +49,9 @@ class LessonProvePanel extends StatelessWidget {
         decoration: BoxDecoration(
           color: const Color(0xFF242329),
           borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+          border: Border.all(
+            color: Colors.white.withValues(alpha: 0.08),
+          ),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -82,51 +91,24 @@ class LessonProvePanel extends StatelessWidget {
             ),
             if (_hasExplanation) ...[
               const SizedBox(height: 16),
-              Container(
-                key: const ValueKey<String>('lesson-move-explanation'),
-                width: double.infinity,
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFE8C76A).withValues(alpha: 0.10),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: const Color(0xFFE8C76A).withValues(alpha: 0.28),
-                  ),
+              _FeedbackCard(
+                key: const ValueKey<String>(
+                  'lesson-move-explanation',
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'COACHING',
-                      style: theme.textTheme.labelMedium?.copyWith(
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 1.1,
-                        color: const Color(0xFFE8C76A),
-                      ),
-                    ),
-                    const SizedBox(height: 7),
-                    Text(
-                      explanationTitle!,
-                      key: const ValueKey<String>(
-                        'lesson-move-explanation-title',
-                      ),
-                      style: theme.textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      explanationMessage!,
-                      key: const ValueKey<String>(
-                        'lesson-move-explanation-message',
-                      ),
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        height: 1.4,
-                        color: Colors.white.withValues(alpha: 0.90),
-                      ),
-                    ),
-                  ],
+                label: 'COACHING',
+                title: explanationTitle!,
+                message: explanationMessage!,
+              ),
+            ],
+            if (_hasAssessment) ...[
+              const SizedBox(height: 12),
+              _FeedbackCard(
+                key: const ValueKey<String>(
+                  'lesson-move-assessment',
                 ),
+                label: 'CONCEPT CHECK',
+                title: assessmentTitle!,
+                message: assessmentMessage!,
               ),
             ],
             if (hintText != null) ...[
@@ -144,7 +126,9 @@ class LessonProvePanel extends StatelessWidget {
                     if (hintProgressLabel != null) ...[
                       Text(
                         hintProgressLabel!,
-                        key: const ValueKey<String>('lesson-hint-progress'),
+                        key: const ValueKey<String>(
+                          'lesson-hint-progress',
+                        ),
                         style: theme.textTheme.labelMedium?.copyWith(
                           fontWeight: FontWeight.w800,
                           color: const Color(0xFFE8C76A),
@@ -154,7 +138,9 @@ class LessonProvePanel extends StatelessWidget {
                     ],
                     Text(
                       hintText!,
-                      key: const ValueKey<String>('lesson-current-hint'),
+                      key: const ValueKey<String>(
+                        'lesson-current-hint',
+                      ),
                       style: theme.textTheme.bodyMedium?.copyWith(
                         height: 1.4,
                         color: Colors.white.withValues(alpha: 0.90),
@@ -164,20 +150,87 @@ class LessonProvePanel extends StatelessWidget {
                 ),
               ),
             ],
-            if (hintActionLabel != null && onHintRequested != null) ...[
+            if (hintActionLabel != null &&
+                onHintRequested != null) ...[
               const SizedBox(height: 14),
               SizedBox(
                 width: double.infinity,
                 child: OutlinedButton.icon(
-                  key: const ValueKey<String>('lesson-hint-button'),
+                  key: const ValueKey<String>(
+                    'lesson-hint-button',
+                  ),
                   onPressed: onHintRequested,
-                  icon: const Icon(Icons.lightbulb_outline),
+                  icon: const Icon(
+                    Icons.lightbulb_outline,
+                  ),
                   label: Text(hintActionLabel!),
                 ),
               ),
             ],
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _FeedbackCard extends StatelessWidget {
+  const _FeedbackCard({
+    super.key,
+    required this.label,
+    required this.title,
+    required this.message,
+  });
+
+  final String label;
+  final String title;
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0xFFE8C76A).withValues(
+          alpha: 0.10,
+        ),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: const Color(0xFFE8C76A).withValues(
+            alpha: 0.28,
+          ),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: theme.textTheme.labelMedium?.copyWith(
+              fontWeight: FontWeight.w800,
+              letterSpacing: 1.1,
+              color: const Color(0xFFE8C76A),
+            ),
+          ),
+          const SizedBox(height: 7),
+          Text(
+            title,
+            style: theme.textTheme.titleSmall?.copyWith(
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            message,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              height: 1.4,
+              color: Colors.white.withValues(alpha: 0.90),
+            ),
+          ),
+        ],
       ),
     );
   }

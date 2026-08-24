@@ -1,27 +1,30 @@
 import '../../../core/chess/played_move.dart';
 import '../domain/lesson_definition.dart';
+import '../teaching/key_squares_move_assessment_rule.dart';
 import '../teaching/key_squares_move_explainer.dart';
 import '../teaching/move_explanation.dart';
+import '../teaching/pedagogical_move_assessment.dart';
 import '../teaching/teaching_state_builder.dart';
 
 /// Coordinates move events with before/after pedagogical positions.
 ///
 /// BoardScreen reports the completed move before it reports the resulting FEN.
-/// This controller deliberately waits for both pieces of information before
-/// asking a curriculum explainer for a pedagogical interpretation.
+/// This controller waits for both before producing curriculum feedback.
 ///
-/// It does not run Stockfish and does not evaluate move quality.
+/// It does not run Stockfish and does not calculate engine move quality.
 class LessonMoveExplanationController {
   LessonMoveExplanationController({
     required this.lesson,
     required String initialFen,
     this.teachingStateBuilder = const TeachingStateBuilder(),
     this.keySquaresMoveExplainer = const KeySquaresMoveExplainer(),
+    this.keySquaresMoveAssessmentRule = const KeySquaresMoveAssessmentRule(),
   }) : _currentFen = initialFen.trim();
 
   final LessonDefinition lesson;
   final TeachingStateBuilder teachingStateBuilder;
   final KeySquaresMoveExplainer keySquaresMoveExplainer;
+  final KeySquaresMoveAssessmentRule keySquaresMoveAssessmentRule;
 
   String _currentFen;
 
@@ -29,20 +32,24 @@ class LessonMoveExplanationController {
   String? _pendingBeforeFen;
 
   MoveExplanation? _latestExplanation;
+  PedagogicalMoveAssessment? _latestAssessment;
 
   String get currentFen => _currentFen;
 
   MoveExplanation? get latestExplanation => _latestExplanation;
 
+  PedagogicalMoveAssessment? get latestAssessment => _latestAssessment;
+
   bool get hasExplanation => _latestExplanation != null;
+
+  bool get hasAssessment => _latestAssessment != null;
 
   void onMovePlayed(PlayedMove move) {
     _pendingMove = move;
     _pendingBeforeFen = _currentFen;
 
-    // Never leave feedback from a previous move visible while a new move
-    // is waiting for its resulting position.
     _latestExplanation = null;
+    _latestAssessment = null;
   }
 
   MoveExplanation? onFenChanged(String fen) {
@@ -59,6 +66,7 @@ class LessonMoveExplanationController {
 
     if (move == null || beforeFen == null) {
       _latestExplanation = null;
+      _latestAssessment = null;
       return null;
     }
 
@@ -75,6 +83,12 @@ class LessonMoveExplanationController {
       after: after,
     );
 
+    _latestAssessment = keySquaresMoveAssessmentRule.assess(
+      move: move,
+      before: before,
+      after: after,
+    );
+
     _pendingMove = null;
     _pendingBeforeFen = null;
 
@@ -86,5 +100,6 @@ class LessonMoveExplanationController {
     _pendingMove = null;
     _pendingBeforeFen = null;
     _latestExplanation = null;
+    _latestAssessment = null;
   }
 }

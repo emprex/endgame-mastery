@@ -68,6 +68,7 @@ class _LessonExperienceScreenState extends State<LessonExperienceScreen> {
 
   void _startPractice() {
     _hintController.reset();
+
     _moveExplanationController.reset(keySquaresLesson01.fen);
 
     _sessionController.startPractice();
@@ -77,6 +78,7 @@ class _LessonExperienceScreenState extends State<LessonExperienceScreen> {
 
   void _startProve() {
     _hintController.reset();
+
     _moveExplanationController.reset(keySquaresLesson01.fen);
 
     _sessionController.startProve();
@@ -178,6 +180,8 @@ class _LessonExperienceScreenState extends State<LessonExperienceScreen> {
 
     final explanation = _moveExplanationController.latestExplanation;
 
+    final assessment = _moveExplanationController.latestAssessment;
+
     final board = IgnorePointer(
       key: const ValueKey<String>('lesson-board-interaction-gate'),
       ignoring: !presentation.boardInteractionEnabled,
@@ -226,6 +230,8 @@ class _LessonExperienceScreenState extends State<LessonExperienceScreen> {
         onHintRequested: _hintActionLabel == null ? null : _requestHint,
         explanationTitle: explanation?.title,
         explanationMessage: explanation?.message,
+        assessmentTitle: assessment?.title,
+        assessmentMessage: assessment?.message,
       );
     } else if (showProvePanel) {
       sidePanel = LessonProvePanel(
@@ -237,6 +243,8 @@ class _LessonExperienceScreenState extends State<LessonExperienceScreen> {
         onHintRequested: _hintActionLabel == null ? null : _requestHint,
         explanationTitle: explanation?.title,
         explanationMessage: explanation?.message,
+        assessmentTitle: assessment?.title,
+        assessmentMessage: assessment?.message,
       );
     } else if (showResultPanel) {
       sidePanel = LessonResultPanel(

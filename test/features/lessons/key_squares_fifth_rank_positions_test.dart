@@ -7,8 +7,12 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('Key Squares Lesson 2 position pack', () {
-    test('contains Learn, two Practice positions and Prove', () {
-      expect(keySquaresLesson02Positions.length, 4);
+    test('uses the exact Diagram 1-2 position for Learn, Practice and Prove', () {
+      expect(keySquaresLesson02Positions.length, 3);
+
+      for (final position in keySquaresLesson02Positions) {
+        expect(position.fen, '1k6/8/1K6/1P6/8/8/8/8 w - - 0 1');
+      }
 
       expect(
         keySquaresLesson02Positions
@@ -16,14 +20,12 @@ void main() {
             .length,
         1,
       );
-
       expect(
         keySquaresLesson02Positions
             .where((position) => position.role == LessonPositionRole.practice)
             .length,
-        2,
+        1,
       );
-
       expect(
         keySquaresLesson02Positions
             .where((position) => position.role == LessonPositionRole.prove)
@@ -39,41 +41,23 @@ void main() {
       }
     });
 
-    test('dynamic rule produces six key squares for every position', () {
+    test('dynamic rule produces the six b5 key squares', () {
       const locator = FenPawnLocator();
       const rule = KeySquaresRule();
 
       for (final position in keySquaresLesson02Positions) {
         final pawns = locator.whitePawns(position.fen);
 
-        expect(pawns.length, 1);
-
-        final keySquares = rule.forWhitePawn(pawns.single);
-
-        expect(keySquares.length, 6);
+        expect(pawns, <String>['b5']);
+        expect(rule.forWhitePawn(pawns.single), <String>{
+          'a6',
+          'b6',
+          'c6',
+          'a7',
+          'b7',
+          'c7',
+        });
       }
-    });
-
-    test('practice positions transfer the pattern across files', () {
-      const rule = KeySquaresRule();
-
-      expect(rule.forWhitePawn('f5'), <String>{
-        'e6',
-        'f6',
-        'g6',
-        'e7',
-        'f7',
-        'g7',
-      });
-
-      expect(rule.forWhitePawn('c5'), <String>{
-        'b6',
-        'c6',
-        'd6',
-        'b7',
-        'c7',
-        'd7',
-      });
     });
   });
 }

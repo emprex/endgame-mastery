@@ -137,7 +137,7 @@ void main() {
       expect(assessment.source, PedagogicalAssessmentSource.curriculum);
     });
 
-    test('Diagram 1-2 does not judge unsupported moves', () {
+    test('Diagram 1-2 recognizes c7 as a key square', () {
       const beforeFen = '1k6/8/1K6/1P6/8/8/8/8 w - - 0 1';
       const afterFen = '1k6/2K5/8/1P6/8/8/8/8 b - - 1 1';
 
@@ -150,7 +150,10 @@ void main() {
         after: after,
       );
 
-      expect(assessment, isNull);
+      expect(assessment, isNotNull);
+      expect(assessment!.quality, PedagogicalMoveQuality.reinforcesConcept);
+      expect(assessment.message, contains('c7'));
+      expect(assessment.source, PedagogicalAssessmentSource.curriculum);
     });
 
     test('Diagram 1-4 recognizes Kf2 as the verified preparation', () {

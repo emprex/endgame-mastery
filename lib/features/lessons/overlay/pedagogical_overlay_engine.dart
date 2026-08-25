@@ -24,6 +24,10 @@ class PedagogicalOverlayEngine {
     switch (lesson.concept) {
       case LessonConcept.keySquares:
         return _buildKeySquares(lesson: lesson, fen: fen);
+      case LessonConcept.practicalAwareness:
+        // These book positions are practical warning examples rather than
+        // key-square geometry lessons. Do not invent board annotations.
+        return PedagogicalOverlay();
     }
   }
 

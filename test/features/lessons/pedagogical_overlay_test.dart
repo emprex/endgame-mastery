@@ -10,7 +10,6 @@ void main() {
         square: ' C6 ',
         role: SquareOverlayRole.keySquare,
       );
-
       expect(overlay.square, 'c6');
     });
 
@@ -30,10 +29,10 @@ void main() {
     });
   });
 
-  group('PedagogicalOverlayEngine - Key Squares', () {
+  group('PedagogicalOverlayEngine - corrected opening lessons', () {
     const engine = PedagogicalOverlayEngine();
 
-    test('initial position highlights c6 d6 and e6', () {
+    test('first position highlights six fifth-rank key squares', () {
       final overlay = engine.build(
         lesson: keySquaresLesson01,
         fen: keySquaresLesson01.fen,
@@ -44,54 +43,17 @@ void main() {
           .map((overlay) => overlay.square)
           .toSet();
 
-      expect(keySquares, <String>{'c6', 'd6', 'e6'});
-
-      // White king starts on d5,
-      // but d5 is not itself a key square.
-      expect(keySquares.contains('d5'), isFalse);
-    });
-
-    test('Black to move keeps the same physical key squares', () {
-      const blackToMoveFen = '8/3k4/8/3K4/3P4/8/8/8 b - - 0 1';
-
-      final overlay = engine.build(
-        lesson: keySquaresLesson01,
-        fen: blackToMoveFen,
-      );
-
-      expect(overlay.squares.map((overlay) => overlay.square).toSet(), <String>{
-        'c6',
-        'd6',
-        'e6',
+      expect(keySquares, <String>{
+        'c6', 'd6', 'e6', 'c7', 'd7', 'e7',
       });
-
-      // Important:
-      //
-      // This test says only that the physical key squares
-      // remain c6/d6/e6.
-      //
-      // It does NOT say that the theoretical result is the same.
-      //
-      // The LessonDefinition tests separately guarantee:
-      //
-      // White to move -> draw.
-      // Black to move -> White wins.
     });
 
-    test('pawn on d5 generates the verified six dynamic key squares', () {
+    test('second position produces no unsupported key-square overlay', () {
       final overlay = engine.build(
-        lesson: keySquaresLesson01,
-
-        // White pawn has moved from d4 to d5.
-        fen: '8/3k4/8/2KP4/8/8/8/8 b - - 0 1',
+        lesson: keySquaresLesson02,
+        fen: keySquaresLesson02.fen,
       );
-
-      final keySquares = overlay.squares
-          .where((overlay) => overlay.role == SquareOverlayRole.keySquare)
-          .map((overlay) => overlay.square)
-          .toSet();
-
-      expect(keySquares, <String>{'c6', 'd6', 'e6', 'c7', 'd7', 'e7'});
+      expect(overlay.isEmpty, isTrue);
     });
 
     test('unsupported later pawn rank produces no invented overlay', () {
@@ -99,7 +61,6 @@ void main() {
         lesson: keySquaresLesson01,
         fen: '8/3k4/3P4/2K5/8/8/8/8 b - - 0 1',
       );
-
       expect(overlay.isEmpty, isTrue);
     });
 

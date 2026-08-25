@@ -110,13 +110,13 @@ final LessonDefinition keySquaresLesson04 = LessonDefinition(
   fen: _lesson04Learn.fen,
   concept: LessonConcept.keySquares,
   objective:
-      'Learn to recalculate key squares when pawn moves change the structure of the endgame.',
+      'Anticipate pawn advances and recalculate the key squares when the pawn structure changes.',
   learnText:
-      'In Diagram 1-4 White must not treat key squares as a fixed map. '
-      'The initial white pawn on g2 has the key squares f4, g4, and h4. '
-      'After Kf2, Black can advance the h-pawn, and White must anticipate how that changes the position. '
-      'The critical idea comes after ...h3: g3 changes the white pawn structure, and the key squares for the pawn on g3 move to f5, g5, and h5, closer to the white king. '
-      'Recalculate the key-square zone whenever a pawn move changes the structure.',
+      'Dvoretsky Diagram 1-4 starts with White king f1 and pawn g2 against Black king c8 and pawn h5. '
+      'The accurate move is 1.Kf2!. The natural 1.Kg1? lets the black king arrive in time to defend the pawn. '
+      'After 1.Kf2 h4, White must play 2.Kg1!!; 2.Kf3? fails to 2...h3!. '
+      'After 2...h3, 3.g3! changes the pawn structure. The key squares for the pawn on g3 are f5, g5, and h5, which are closer to White\'s king. '
+      'The rule is practical: when a pawn move changes the structure, recalculate the key squares instead of using the old map.',
   userSide: ChessSide.white,
   initialKeySquares: <String>{'f4', 'g4', 'h4'},
   theoreticalResult: _lesson04Learn.theoreticalResult,
@@ -129,16 +129,16 @@ final LessonDefinition keySquaresLesson04 = LessonDefinition(
 
 final LessonDefinition pawnTragicomedyLesson05 = LessonDefinition(
   id: pawnTragicomedyLesson05Id,
-  title: 'Tragicomedy: Do Not Resign Too Soon',
+  title: 'Tragicomedy: Calculate Before Resigning',
   fen: '8/8/3p4/3P4/5k2/3K4/8/8 w - - 0 1',
   concept: LessonConcept.practicalAwareness,
   objective:
-      'Learn to evaluate the resulting pawn ending before assuming that losing a pawn means losing the game.',
+      'Keep calculating after a pawn is lost and evaluate the resulting king-and-pawn ending before resigning.',
   learnText:
-      'Dvoretsky places this Coull–Stanciu position immediately after the Key Squares examples as a practical warning. '
-      'White resigned after seeing that the d5-pawn could not be saved. The lesson is not to stop the calculation there. '
-      'Before resigning, calculate the position that remains after the pawn is lost and evaluate the kings, the remaining pawn, and the side to move. '
-      'Material loss and game loss are not the same conclusion.',
+      'In the Coull-Stanciu position from Diagram 1-5, White saw that the d5-pawn could not be saved and resigned. '
+      'Dvoretsky presents the example as a warning against ending the calculation too early. '
+      'The important question is not whether the pawn falls, but what the remaining pawn ending actually is. '
+      'Before resigning, continue the calculation through the material change and judge the resulting kings, pawn and side to move.',
   userSide: ChessSide.white,
   initialKeySquares: const <String>{},
   theoreticalResult: TheoreticalResult.draw,
@@ -147,16 +147,16 @@ final LessonDefinition pawnTragicomedyLesson05 = LessonDefinition(
 
 final LessonDefinition pawnTragicomedyLesson06 = LessonDefinition(
   id: pawnTragicomedyLesson06Id,
-  title: 'Tragicomedy: One Careless Rook Move',
+  title: 'Tragicomedy: Check the King Route',
   fen: '8/8/5pk1/5r2/R7/5K2/8/8 w - - 0 1',
   concept: LessonConcept.practicalAwareness,
   objective:
-      'Learn to check the enemy king\'s access before making an automatic rook move in a technical ending.',
+      'Before making an automatic rook move, check whether it gives the enemy king a decisive route.',
   learnText:
-      'Dvoretsky ends the Tragicomedies with the Spielmann–Duras position. '
-      'White played 1.Rf4?? and after ...Kg5! resigned. '
-      'The warning is practical: before committing the rook, check whether the move opens a decisive route for the enemy king. '
-      'Do not judge a technical position by habit; recalculate the opponent\'s most forcing reply first.',
+      'In the Spielmann-Duras position from Diagram 1-6, White played 1.Rf4??. Black answered 1...Kg5!, and White resigned. '
+      'Dvoretsky uses the example as a final practical warning before Corresponding Squares. '
+      'The lesson is not to move the rook by habit: first ask which king square the move releases. '
+      'Here the critical route is ...Kg5, so the user must check Black\'s king penetration before committing the rook.',
   userSide: ChessSide.white,
   initialKeySquares: const <String>{},
   theoreticalResult: TheoreticalResult.draw,

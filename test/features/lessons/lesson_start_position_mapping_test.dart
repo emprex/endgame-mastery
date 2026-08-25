@@ -56,11 +56,17 @@ void main() {
       expect(practice.fen, '8/3k4/8/3K4/3P4/8/8/8 b - - 0 1');
     });
 
-    test('lesson 2 prove returns to the exact Diagram 1-2 position', () {
+    test('lesson 2 first practice and prove use the exact Diagram 1-2 position', () {
+      const fen = '1k6/8/1K6/1P6/8/8/8/8 w - - 0 1';
+      final practice = keySquaresLesson02Positions
+          .where((position) => position.role.name == 'practice')
+          .toList(growable: false);
       final prove = keySquaresLesson02Positions.singleWhere(
-        (position) => position.id == 'pawn-key-squares-02d',
+        (position) => position.id == 'pawn-key-squares-02e',
       );
-      expect(prove.fen, '1k6/8/1K6/1P6/8/8/8/8 w - - 0 1');
+
+      expect(practice.first.fen, fen);
+      expect(prove.fen, fen);
     });
   });
 }

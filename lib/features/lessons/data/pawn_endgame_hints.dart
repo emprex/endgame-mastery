@@ -39,3 +39,12 @@ final LessonHints keySquaresLesson03Hints = LessonHints(
   targeted:
       'Do not head toward the defender. Build your king route toward the queenside key square that is farthest from Black.',
 );
+
+final LessonHints keySquaresLesson04Hints = LessonHints(
+  concept:
+      'Key squares depend on the current pawn structure. When a pawn moves, recalculate the key-square zone instead of relying on the old one.',
+  visual:
+      'The pawn on g2 uses f4, g4, and h4. If that pawn reaches g3, its key squares become f5, g5, and h5.',
+  targeted:
+      'Watch Black\'s h-pawn and prepare for the moment when changing the white pawn structure brings the new key squares closer to your king.',
+);

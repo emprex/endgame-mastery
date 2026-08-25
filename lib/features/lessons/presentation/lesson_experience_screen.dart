@@ -1,5 +1,6 @@
 import 'package:endgame_mastery/core/chess/board_game_result.dart';
 import 'package:endgame_mastery/core/chess/played_move.dart';
+import 'package:endgame_mastery/core/game/game_engine_controller.dart';
 import 'package:endgame_mastery/features/board/presentation/board_screen.dart';
 import 'package:endgame_mastery/features/lessons/data/curriculum.dart';
 import 'package:endgame_mastery/features/lessons/data/pawn_endgame_hints.dart';
@@ -16,6 +17,7 @@ import 'package:endgame_mastery/features/lessons/session/lesson_experience_build
 import 'package:endgame_mastery/features/lessons/session/lesson_hint_controller.dart';
 import 'package:endgame_mastery/features/lessons/session/lesson_hint_overlay_policy.dart';
 import 'package:endgame_mastery/features/lessons/session/lesson_move_explanation_controller.dart';
+import 'package:endgame_mastery/features/lessons/session/lesson_position_resolver.dart';
 import 'package:endgame_mastery/features/lessons/session/lesson_progression.dart';
 import 'package:endgame_mastery/features/lessons/session/lesson_session_controller.dart';
 import 'package:endgame_mastery/features/lessons/session/lesson_session_outcome.dart';
@@ -42,6 +44,9 @@ class _LessonExperienceScreenState extends State<LessonExperienceScreen> {
   static const LessonHintOverlayPolicy _hintOverlayPolicy =
       LessonHintOverlayPolicy();
 
+  static const LessonPositionResolver _positionResolver =
+      LessonPositionResolver();
+
   late final LessonProgression _progression;
 
   late LessonDefinition _currentLesson;
@@ -54,6 +59,7 @@ class _LessonExperienceScreenState extends State<LessonExperienceScreen> {
   String? _proofFen;
 
   int _boardRevision = 0;
+  int _practicePositionIndex = 0;
 
   bool _mobilePanelExpanded = true;
 
@@ -78,27 +84,36 @@ class _LessonExperienceScreenState extends State<LessonExperienceScreen> {
     throw StateError('No hints configured for lesson ${lesson.id}.');
   }
 
-  void _loadLesson(
-    LessonDefinition lesson, {
-    required bool rebuild,
-  }) {
+  EngineSide _engineSideForLesson(LessonDefinition lesson) {
+    return switch (lesson.userSide) {
+      ChessSide.white => EngineSide.black,
+      ChessSide.black => EngineSide.white,
+    };
+  }
+
+  void _loadLesson(LessonDefinition lesson, {required bool rebuild}) {
     _currentLesson = lesson;
 
     _sessionController = LessonSessionController(
       initialState: LessonSessionState.initial(lesson),
     );
 
-    _hintController = LessonHintController(
-      hints: _hintsForLesson(lesson),
+    _hintController = LessonHintController(hints: _hintsForLesson(lesson));
+
+    final learnPosition = _positionResolver.positionForStage(
+      lesson: lesson,
+      stage: LessonStage.learn,
     );
+
+    _currentFen = learnPosition.fen;
 
     _moveExplanationController = LessonMoveExplanationController(
       lesson: lesson,
-      initialFen: lesson.fen,
+      initialFen: _currentFen,
     );
 
-    _currentFen = lesson.fen;
     _proofFen = null;
+    _practicePositionIndex = 0;
     _mobilePanelExpanded = true;
     _boardRevision++;
 
@@ -110,25 +125,80 @@ class _LessonExperienceScreenState extends State<LessonExperienceScreen> {
   void _startPractice() {
     _hintController.reset();
 
-    _moveExplanationController.reset(_currentLesson.fen);
+    final practicePositions = _positionResolver.practicePositionsFor(
+      _currentLesson,
+    );
+
+    final practiceFen = practicePositions.isNotEmpty
+        ? practicePositions.first.fen
+        : _positionResolver
+              .positionForStage(
+                lesson: _currentLesson,
+                stage: LessonStage.practice,
+              )
+              .fen;
+
+    _practicePositionIndex = 0;
+
+    _moveExplanationController.reset(practiceFen);
 
     _sessionController.startPractice();
 
     setState(() {
+      _currentFen = practiceFen;
       _mobilePanelExpanded = false;
+      _boardRevision++;
     });
+  }
+
+  bool get _hasAnotherPracticePosition {
+    final positions = _positionResolver.practicePositionsFor(_currentLesson);
+
+    return positions.isNotEmpty &&
+        _practicePositionIndex < positions.length - 1;
+  }
+
+  void _advancePracticeOrStartProve() {
+    if (_hasAnotherPracticePosition) {
+      final positions = _positionResolver.practicePositionsFor(_currentLesson);
+
+      _practicePositionIndex++;
+
+      final nextFen = positions[_practicePositionIndex].fen;
+
+      _hintController.reset();
+
+      _moveExplanationController.reset(nextFen);
+
+      setState(() {
+        _currentFen = nextFen;
+        _mobilePanelExpanded = false;
+        _boardRevision++;
+      });
+
+      return;
+    }
+
+    _startProve();
   }
 
   void _startProve() {
     _hintController.reset();
 
-    _moveExplanationController.reset(_currentLesson.fen);
+    final provePosition = _positionResolver.positionForStage(
+      lesson: _currentLesson,
+      stage: LessonStage.prove,
+    );
+
+    final proveFen = provePosition.fen;
+
+    _moveExplanationController.reset(proveFen);
 
     _sessionController.startProve();
 
     setState(() {
-      _currentFen = _currentLesson.fen;
-      _proofFen = _currentLesson.fen;
+      _currentFen = proveFen;
+      _proofFen = proveFen;
       _mobilePanelExpanded = false;
       _boardRevision++;
     });
@@ -162,6 +232,14 @@ class _LessonExperienceScreenState extends State<LessonExperienceScreen> {
       LessonHintLevel.visual => 'Hint 2 of 3',
       LessonHintLevel.targeted => 'Hint 3 of 3',
     };
+  }
+
+  String get _practicePrimaryActionLabel {
+    if (_hasAnotherPracticePosition) {
+      return 'Next Practice Position';
+    }
+
+    return 'Start Prove';
   }
 
   void _completeLesson() {
@@ -254,7 +332,8 @@ class _LessonExperienceScreenState extends State<LessonExperienceScreen> {
           widget.board ??
           BoardScreen(
             key: ValueKey<int>(_boardRevision),
-            initialFen: _currentLesson.fen,
+            initialFen: _currentFen,
+            engineSide: _engineSideForLesson(_currentLesson),
             pedagogicalSquares: showPedagogicalSquares
                 ? experience.teaching.keySquares
                 : const <String>{},
@@ -265,9 +344,13 @@ class _LessonExperienceScreenState extends State<LessonExperienceScreen> {
     );
 
     final showLearnPanel = presentation.showLearnContent;
+
     final showPracticePanel = experience.stage == LessonStage.practice;
+
     final showProvePanel = experience.stage == LessonStage.prove;
+
     final showResultPanel = experience.stage == LessonStage.result;
+
     final showCompletedPanel = experience.stage == LessonStage.completed;
 
     Widget? sidePanel;
@@ -284,8 +367,8 @@ class _LessonExperienceScreenState extends State<LessonExperienceScreen> {
       sidePanel = LessonPracticePanel(
         lessonTitle: experience.lesson.title,
         objective: experience.lesson.objective,
-        primaryActionLabel: presentation.primaryActionLabel ?? 'Start Prove',
-        onPrimaryAction: _startProve,
+        primaryActionLabel: _practicePrimaryActionLabel,
+        onPrimaryAction: _advancePracticeOrStartProve,
         hintText: _hintController.currentHint,
         hintProgressLabel: _hintProgressLabel,
         hintActionLabel: _hintActionLabel,
@@ -372,7 +455,6 @@ class _LessonExperienceScreenState extends State<LessonExperienceScreen> {
         return Stack(
           children: [
             Positioned.fill(child: board),
-
             if (!_mobilePanelExpanded && sidePanel != null)
               Positioned(
                 left: 12,
@@ -389,14 +471,13 @@ class _LessonExperienceScreenState extends State<LessonExperienceScreen> {
                         showProvePanel
                             ? 'Open Prove panel'
                             : showPracticePanel
-                                ? 'Open Coach'
-                                : 'Open lesson panel',
+                            ? 'Open Coach'
+                            : 'Open lesson panel',
                       ),
                     ),
                   ),
                 ),
               ),
-
             if (_mobilePanelExpanded && sidePanel != null)
               Positioned(
                 left: 8,

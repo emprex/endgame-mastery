@@ -13,6 +13,7 @@ class BoardScreen extends StatefulWidget {
   const BoardScreen({
     super.key,
     this.initialFen,
+    this.engineSide = EngineSide.black,
     this.pedagogicalSquares = const <String>{},
     this.onFenChanged,
     this.onGameEnded,
@@ -20,6 +21,7 @@ class BoardScreen extends StatefulWidget {
   });
 
   final String? initialFen;
+  final EngineSide engineSide;
   final Set<String> pedagogicalSquares;
   final ValueChanged<String>? onFenChanged;
   final ValueChanged<BoardGameResult>? onGameEnded;
@@ -52,7 +54,7 @@ class _BoardScreenState extends State<BoardScreen> {
     gameEngineController = GameEngineController(
       chessController: controller,
       engine: createChessEngine(),
-      engineSide: EngineSide.black,
+      engineSide: widget.engineSide,
     );
 
     _initializeEngine();
@@ -70,6 +72,14 @@ class _BoardScreenState extends State<BoardScreen> {
         engineReady = true;
         engineError = null;
       });
+
+      await WidgetsBinding.instance.endOfFrame;
+
+      if (!mounted) {
+        return;
+      }
+
+      await _requestEngineMoveIfNeeded();
     } catch (error) {
       if (!mounted) {
         return;
@@ -232,13 +242,21 @@ class _BoardScreenState extends State<BoardScreen> {
       return;
     }
 
-    if (!gameEngineController.isEngineTurn) {
-      return;
-    }
-
     await WidgetsBinding.instance.endOfFrame;
 
     if (!mounted) {
+      return;
+    }
+
+    await _requestEngineMoveIfNeeded();
+  }
+
+  Future<void> _requestEngineMoveIfNeeded() async {
+    if (!mounted ||
+        !engineReady ||
+        controller.isGameOver() ||
+        !gameEngineController.isEngineTurn ||
+        gameEngineController.engineBusy) {
       return;
     }
 
@@ -411,6 +429,14 @@ class _BoardScreenState extends State<BoardScreen> {
     });
 
     _notifyFenChanged();
+
+    await WidgetsBinding.instance.endOfFrame;
+
+    if (!mounted) {
+      return;
+    }
+
+    await _requestEngineMoveIfNeeded();
   }
 
   String _endTitle() {
@@ -430,10 +456,13 @@ class _BoardScreenState extends State<BoardScreen> {
     switch (controller.gameEndState()) {
       case GameEndState.checkmate:
         return controller.isWhiteToMove() ? 'Black wins' : 'White wins';
+
       case GameEndState.stalemate:
         return 'No legal moves';
+
       case GameEndState.draw:
         return 'Game drawn';
+
       case GameEndState.none:
         return '';
     }

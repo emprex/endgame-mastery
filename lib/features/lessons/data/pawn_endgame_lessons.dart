@@ -1,16 +1,7 @@
 import '../domain/lesson_definition.dart';
+import '../domain/lesson_position_definition.dart';
+import 'pawn_endgame_positions.dart';
 
-/// Pawn Endgames — Key Squares.
-///
-/// Dvoretsky's teaching point here depends critically on the side to move.
-///
-/// Same piece placement:
-///
-/// White to move -> draw.
-/// Black to move -> White wins.
-///
-/// The key squares are c6, d6 and e6.
-/// The white king on d5 is not yet on a key square.
 final LessonDefinition keySquaresLesson01 = LessonDefinition(
   id: 'pawn-key-squares-01',
   title: 'Key Squares',
@@ -35,20 +26,13 @@ final LessonDefinition keySquaresLesson01 = LessonDefinition(
   difficulty: 1,
 );
 
-/// Pawn Endgames — Key Squares on the fifth rank.
-///
-/// This original teaching position isolates the verified fifth-rank rule:
-///
-/// a non-rook white pawn on d5 has six key squares:
-///
-/// c6, d6, e6, c7, d7 and e7.
-///
-/// The distant black king keeps the position focused on key-square geometry
-/// rather than introducing opposition or outflanking.
+final LessonPositionDefinition _lesson02Learn = keySquaresLesson02Positions
+    .singleWhere((position) => position.role == LessonPositionRole.learn);
+
 final LessonDefinition keySquaresLesson02 = LessonDefinition(
-  id: 'pawn-key-squares-02',
+  id: keySquaresLesson02Id,
   title: 'The Fifth Rank',
-  fen: '7k/8/8/3P4/3K4/8/8/8 w - - 0 1',
+  fen: _lesson02Learn.fen,
   concept: LessonConcept.keySquares,
   objective: 'Understand how the key-square zone expands when the pawn reaches the fifth rank.',
   learnText:
@@ -57,6 +41,15 @@ final LessonDefinition keySquaresLesson02 = LessonDefinition(
       'The king should use this larger target zone to support the pawn toward promotion.',
   userSide: ChessSide.white,
   initialKeySquares: <String>{'c6', 'd6', 'e6', 'c7', 'd7', 'e7'},
-  theoreticalResult: TheoreticalResult.win,
+  theoreticalResult: _lesson02Learn.theoreticalResult,
+  comparisonOutcomes: keySquaresLesson02Positions
+      .where((position) => position.role != LessonPositionRole.learn)
+      .map(
+        (position) => LessonPositionOutcome(
+          fen: position.fen,
+          result: position.theoreticalResult,
+          teachingPoint: position.teachingPoint,
+        ),
+      ),
   difficulty: 1,
 );

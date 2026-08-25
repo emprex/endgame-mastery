@@ -7,6 +7,10 @@ class LessonPositionResolver {
   const LessonPositionResolver();
 
   List<LessonPositionDefinition> positionsFor(LessonDefinition lesson) {
+    if (lesson.id == keySquaresLesson01Id) {
+      return keySquaresLesson01Positions;
+    }
+
     if (lesson.id == keySquaresLesson02Id) {
       return keySquaresLesson02Positions;
     }

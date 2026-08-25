@@ -14,6 +14,7 @@ class BoardScreen extends StatefulWidget {
     super.key,
     this.initialFen,
     this.engineSide = EngineSide.black,
+    this.engineEnabled = true,
     this.pedagogicalSquares = const <String>{},
     this.onFenChanged,
     this.onGameEnded,
@@ -22,6 +23,7 @@ class BoardScreen extends StatefulWidget {
 
   final String? initialFen;
   final EngineSide engineSide;
+  final bool engineEnabled;
   final Set<String> pedagogicalSquares;
   final ValueChanged<String>? onFenChanged;
   final ValueChanged<BoardGameResult>? onGameEnded;
@@ -134,7 +136,8 @@ class _BoardScreenState extends State<BoardScreen> {
   }
 
   bool get interactionLocked {
-    return !engineReady ||
+    return !widget.engineEnabled ||
+        !engineReady ||
         gameEngineController.engineBusy ||
         gameEngineController.isEngineTurn ||
         controller.isGameOver();
@@ -253,6 +256,7 @@ class _BoardScreenState extends State<BoardScreen> {
 
   Future<void> _requestEngineMoveIfNeeded() async {
     if (!mounted ||
+        !widget.engineEnabled ||
         !engineReady ||
         controller.isGameOver() ||
         !gameEngineController.isEngineTurn ||

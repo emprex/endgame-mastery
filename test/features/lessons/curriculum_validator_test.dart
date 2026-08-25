@@ -18,7 +18,7 @@ void main() {
       final duplicateLesson = LessonDefinition(
         id: keySquaresLesson01.id,
         title: 'Duplicate',
-        fen: '8/3k4/8/3P4/3K4/8/8/8 w - - 0 1',
+        fen: keySquaresLesson01.fen,
         concept: LessonConcept.keySquares,
         objective: 'Duplicate test.',
         learnText: 'Duplicate test lesson.',
@@ -41,7 +41,7 @@ void main() {
       final lesson = LessonDefinition(
         id: 'missing-key-squares',
         title: 'Missing Key Squares',
-        fen: '8/3k4/8/3P4/3K4/8/8/8 w - - 0 1',
+        fen: keySquaresLesson01.fen,
         concept: LessonConcept.keySquares,
         objective: 'Validation test.',
         learnText: 'Validation test.',
@@ -61,18 +61,14 @@ void main() {
       );
     });
 
-    test('first two corrected lesson positions resolve to draws', () {
+    test('first two corrected lesson positions resolve to verified results', () {
       expect(
-        keySquaresLesson01.theoreticalResultForFen(
-          '8/3k4/8/3P4/3K4/8/8/8 w - - 0 1',
-        ),
+        keySquaresLesson01.theoreticalResultForFen(keySquaresLesson01.fen),
         TheoreticalResult.draw,
       );
       expect(
-        keySquaresLesson02.theoreticalResultForFen(
-          '1k6/8/1P6/1K6/8/8/8/8 w - - 0 1',
-        ),
-        TheoreticalResult.draw,
+        keySquaresLesson02.theoreticalResultForFen(keySquaresLesson02.fen),
+        TheoreticalResult.win,
       );
     });
   });

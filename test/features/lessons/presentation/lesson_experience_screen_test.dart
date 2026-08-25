@@ -18,7 +18,7 @@ void main() {
     await tester.pumpWidget(buildScreen());
 
     expect(find.text('LEARN'), findsOneWidget);
-    expect(find.text('Key Squares'), findsOneWidget);
+    expect(find.text('Key Squares: Fifth-Rank Pawn'), findsOneWidget);
     expect(find.text('Start Practice'), findsOneWidget);
 
     final gate = tester.widget<IgnorePointer>(
@@ -77,7 +77,7 @@ void main() {
 
     expect(tester.takeException(), isNull);
 
-    expect(find.text('Key Squares'), findsOneWidget);
+    expect(find.text('Key Squares: Fifth-Rank Pawn'), findsOneWidget);
 
     final startPractice = find.text('Start Practice');
 
@@ -158,13 +158,11 @@ void main() {
 
     expect(gateDuringProve.ignoring, isFalse);
 
-    // Hints are allowed during PROVE.
     expect(
       find.byKey(const ValueKey<String>('lesson-hint-button')),
       findsOneWidget,
     );
 
-    // But PROVE must still have no artificial completion action.
     expect(find.text('Finish Proof'), findsNothing);
     expect(find.text('Complete Proof'), findsNothing);
     expect(find.text('Finish'), findsNothing);

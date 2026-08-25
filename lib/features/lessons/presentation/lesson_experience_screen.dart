@@ -26,9 +26,10 @@ import 'package:endgame_mastery/features/lessons/session/lesson_stage.dart';
 import 'package:flutter/material.dart';
 
 class LessonExperienceScreen extends StatefulWidget {
-  const LessonExperienceScreen({super.key, this.board});
+  const LessonExperienceScreen({super.key, this.board, this.initialLesson});
 
   final Widget? board;
+  final LessonDefinition? initialLesson;
 
   @override
   State<LessonExperienceScreen> createState() => _LessonExperienceScreenState();
@@ -70,7 +71,10 @@ class _LessonExperienceScreenState extends State<LessonExperienceScreen> {
 
     _progression = LessonProgression(curriculum);
 
-    _loadLesson(_progression.firstLesson, rebuild: false);
+    _loadLesson(
+      widget.initialLesson ?? _progression.firstLesson,
+      rebuild: false,
+    );
   }
 
   void _trace(String message) {

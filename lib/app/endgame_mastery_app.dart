@@ -1,4 +1,4 @@
-import 'package:endgame_mastery/features/lessons/presentation/lesson_experience_screen.dart';
+import 'package:endgame_mastery/features/lessons/presentation/lessons_screen.dart';
 import 'package:flutter/material.dart';
 
 class EndgameMasteryApp extends StatelessWidget {
@@ -14,7 +14,7 @@ class EndgameMasteryApp extends StatelessWidget {
         useMaterial3: true,
         scaffoldBackgroundColor: const Color(0xFF171717),
       ),
-      home: const LessonExperienceScreen(),
+      home: const LessonsScreen(),
     );
   }
 }

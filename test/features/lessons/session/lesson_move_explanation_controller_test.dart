@@ -29,9 +29,8 @@ void main() {
       expect(controller.latestAssessment, isNull);
     });
 
-    test('produces explanation after key-square geometry changes', () {
+    test('produces explanation after learner changes key-square geometry', () {
       const beforeFen = '7k/8/8/8/2KP4/8/8/8 w - - 0 1';
-
       const afterFen = '7k/8/8/3P4/2K5/8/8/8 b - - 0 1';
 
       final controller = LessonMoveExplanationController(
@@ -44,17 +43,13 @@ void main() {
       final explanation = controller.onFenChanged(afterFen);
 
       expect(explanation, isNotNull);
-
       expect(explanation!.source, MoveExplanationSource.curriculum);
-
       expect(explanation.title, 'Key-square geometry changed');
-
       expect(controller.latestAssessment, isNull);
     });
 
-    test('produces assessment when white king reaches key square', () {
+    test('produces assessment when learner king reaches key square', () {
       const beforeFen = '7k/8/8/3K4/3P4/8/8/8 w - - 0 1';
-
       const afterFen = '7k/8/2K5/8/3P4/8/8/8 b - - 1 1';
 
       final controller = LessonMoveExplanationController(
@@ -69,33 +64,60 @@ void main() {
       final assessment = controller.latestAssessment;
 
       expect(assessment, isNotNull);
-
       expect(assessment!.quality, PedagogicalMoveQuality.reinforcesConcept);
-
       expect(assessment.source, PedagogicalAssessmentSource.curriculum);
     });
 
-    test('new move clears previous explanation and assessment', () {
-      const beforeFen = '7k/8/8/3K4/3P4/8/8/8 w - - 0 1';
-
-      const afterFen = '7k/8/2K5/8/3P4/8/8/8 b - - 1 1';
+    test('Stockfish reply keeps learner coaching visible', () {
+      const learnerBeforeFen = '7k/8/8/3K4/3P4/8/8/8 w - - 0 1';
+      const learnerAfterFen = '7k/8/2K5/8/3P4/8/8/8 b - - 1 1';
+      const engineAfterFen = '8/7k/2K5/8/3P4/8/8/8 w - - 2 2';
 
       final controller = LessonMoveExplanationController(
         lesson: keySquaresLesson01,
-        initialFen: beforeFen,
+        initialFen: learnerBeforeFen,
       );
 
       controller.onMovePlayed(PlayedMove(from: 'd5', to: 'c6'));
+      controller.onFenChanged(learnerAfterFen);
 
-      controller.onFenChanged(afterFen);
+      final learnerAssessment = controller.latestAssessment;
 
-      expect(controller.latestAssessment, isNotNull);
+      expect(learnerAssessment, isNotNull);
 
       controller.onMovePlayed(PlayedMove(from: 'h8', to: 'h7'));
+      controller.onFenChanged(engineAfterFen);
 
-      expect(controller.latestExplanation, isNull);
+      expect(controller.latestAssessment, same(learnerAssessment));
+    });
 
-      expect(controller.latestAssessment, isNull);
+    test('next learner move may replace previous coaching', () {
+      const firstBeforeFen = '7k/8/8/3K4/3P4/8/8/8 w - - 0 1';
+      const firstAfterFen = '7k/8/2K5/8/3P4/8/8/8 b - - 1 1';
+      const engineAfterFen = '8/7k/2K5/8/3P4/8/8/8 w - - 2 2';
+      const secondAfterFen = '8/7k/8/2K5/3P4/8/8/8 b - - 3 2';
+
+      final controller = LessonMoveExplanationController(
+        lesson: keySquaresLesson01,
+        initialFen: firstBeforeFen,
+      );
+
+      controller.onMovePlayed(PlayedMove(from: 'd5', to: 'c6'));
+      controller.onFenChanged(firstAfterFen);
+
+      final firstAssessment = controller.latestAssessment;
+
+      expect(firstAssessment, isNotNull);
+
+      controller.onMovePlayed(PlayedMove(from: 'h8', to: 'h7'));
+      controller.onFenChanged(engineAfterFen);
+
+      expect(controller.latestAssessment, same(firstAssessment));
+
+      controller.onMovePlayed(PlayedMove(from: 'c6', to: 'c5'));
+      controller.onFenChanged(secondAfterFen);
+
+      expect(controller.currentFen, secondAfterFen);
     });
 
     test('reset clears all feedback state', () {
@@ -109,10 +131,8 @@ void main() {
       controller.reset(keySquaresLesson01.fen);
 
       expect(controller.currentFen, keySquaresLesson01.fen);
-
       expect(controller.latestExplanation, isNull);
       expect(controller.latestAssessment, isNull);
-
       expect(controller.hasExplanation, isFalse);
       expect(controller.hasAssessment, isFalse);
     });

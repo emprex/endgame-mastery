@@ -6,10 +6,13 @@ import '../teaching/move_explanation.dart';
 import '../teaching/pedagogical_move_assessment.dart';
 import '../teaching/teaching_state_builder.dart';
 
-/// Coordinates move events with before/after pedagogical positions.
+/// Coordinates learner move events with before/after pedagogical positions.
 ///
 /// BoardScreen reports the completed move before it reports the resulting FEN.
 /// This controller waits for both before producing curriculum feedback.
+///
+/// Only the learner's moves may create or replace coaching. Engine replies
+/// update the tracked position but leave the learner's latest coaching visible.
 ///
 /// It does not run Stockfish and does not calculate engine move quality.
 class LessonMoveExplanationController {
@@ -45,11 +48,14 @@ class LessonMoveExplanationController {
   bool get hasAssessment => _latestAssessment != null;
 
   void onMovePlayed(PlayedMove move) {
+    if (!_isLearnerToMove(_currentFen)) {
+      _pendingMove = null;
+      _pendingBeforeFen = null;
+      return;
+    }
+
     _pendingMove = move;
     _pendingBeforeFen = _currentFen;
-
-    _latestExplanation = null;
-    _latestAssessment = null;
   }
 
   MoveExplanation? onFenChanged(String fen) {
@@ -65,9 +71,7 @@ class LessonMoveExplanationController {
     _currentFen = normalizedFen;
 
     if (move == null || beforeFen == null) {
-      _latestExplanation = null;
-      _latestAssessment = null;
-      return null;
+      return _latestExplanation;
     }
 
     final before = teachingStateBuilder.build(lesson: lesson, fen: beforeFen);
@@ -101,5 +105,21 @@ class LessonMoveExplanationController {
     _pendingBeforeFen = null;
     _latestExplanation = null;
     _latestAssessment = null;
+  }
+
+  bool _isLearnerToMove(String fen) {
+    final fields = fen.trim().split(RegExp(r'\s+'));
+
+    if (fields.length < 2) {
+      return false;
+    }
+
+    final sideToMove = fields[1] == 'b'
+        ? ChessSide.black
+        : fields[1] == 'w'
+        ? ChessSide.white
+        : null;
+
+    return sideToMove == lesson.userSide;
   }
 }

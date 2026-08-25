@@ -2,27 +2,52 @@ import '../domain/lesson_definition.dart';
 import '../domain/lesson_position_definition.dart';
 import 'pawn_endgame_positions.dart';
 
+List<LessonPositionOutcome> _comparisonOutcomesFrom(
+  List<LessonPositionDefinition> positions, {
+  required String initialFen,
+}) {
+  final seen = <String>{initialFen};
+  final outcomes = <LessonPositionOutcome>[];
+
+  for (final position in positions) {
+    if (!seen.add(position.fen)) {
+      continue;
+    }
+
+    outcomes.add(
+      LessonPositionOutcome(
+        fen: position.fen,
+        result: position.theoreticalResult,
+        teachingPoint: position.teachingPoint,
+      ),
+    );
+  }
+
+  return List<LessonPositionOutcome>.unmodifiable(outcomes);
+}
+
+final LessonPositionDefinition _lesson01Learn = keySquaresLesson01Positions
+    .singleWhere((position) => position.role == LessonPositionRole.learn);
+
 final LessonDefinition keySquaresLesson01 = LessonDefinition(
   id: keySquaresLesson01Id,
-  title: 'Key Squares',
-  fen: '8/3k4/8/3K4/3P4/8/8/8 w - - 0 1',
+  title: 'Key Squares: Fifth-Rank Pawn',
+  fen: _lesson01Learn.fen,
   concept: LessonConcept.keySquares,
-  objective: 'Understand what key squares are and why the side to move can completely change the theoretical result.',
+  objective:
+      'Read the key-square zone correctly for the exact d5-pawn position and hold the theoretical draw.',
   learnText:
-      'The white king on d5 has not yet reached a key square. '
-      'The relevant key squares are c6, d6, and e6. '
-      'With White to move, White cannot force entry onto one of these key squares, so the position is drawn. '
-      'With Black to move, Black must retreat and White can enter a key square, so White wins.',
+      'White has king d4 and pawn d5 against the black king on d7. '
+      'Because the pawn is already on the fifth rank, its key-square zone contains six squares: c6, d6, e6, c7, d7, and e7. '
+      'The black king already controls this zone. White to move must not confuse having an advanced pawn with having a forced win. '
+      'The practical task is to play accurately and preserve the theoretical draw.',
   userSide: ChessSide.white,
-  initialKeySquares: <String>{'c6', 'd6', 'e6'},
-  theoreticalResult: TheoreticalResult.draw,
-  comparisonOutcomes: <LessonPositionOutcome>[
-    LessonPositionOutcome(
-      fen: '8/3k4/8/3K4/3P4/8/8/8 b - - 0 1',
-      result: TheoreticalResult.win,
-      teachingPoint: 'Black must retreat, allowing the white king to enter one of the key squares.',
-    ),
-  ],
+  initialKeySquares: <String>{'c6', 'd6', 'e6', 'c7', 'd7', 'e7'},
+  theoreticalResult: _lesson01Learn.theoreticalResult,
+  comparisonOutcomes: _comparisonOutcomesFrom(
+    keySquaresLesson01Positions,
+    initialFen: _lesson01Learn.fen,
+  ),
   difficulty: 1,
 );
 
@@ -31,28 +56,22 @@ final LessonPositionDefinition _lesson02Learn = keySquaresLesson02Positions
 
 final LessonDefinition keySquaresLesson02 = LessonDefinition(
   id: keySquaresLesson02Id,
-  title: 'The Fifth Rank',
+  title: 'Do Not Force the Pawn',
   fen: _lesson02Learn.fen,
-  concept: LessonConcept.keySquares,
+  concept: LessonConcept.practicalAwareness,
   objective:
-      'Understand the six key squares of a fifth-rank pawn and why reaching one establishes a theoretical win without ending the conversion task.',
+      'Play the exact b6-pawn position without assuming that an advanced pawn can be forced through.',
   learnText:
-      'For the white pawn on b5, the six key squares are a6, b6, c6, a7, b7, and c7. '
-      'In this position the white king already stands on b6, so White has reached a key square and the position is theoretically won. '
-      'That does not mean every continuation is equally precise: White still has to convert accurately and avoid defensive resources such as stalemate.',
+      'White has king b5 and pawn b6 against the black king on b8, with White to move. '
+      'This position is a drawing task. The pawn is close to promotion, but the defending king is ideally placed in front of it. '
+      'Do not invent a winning plan from the pawn\'s rank alone. Play the position to its genuine chess conclusion and prove the draw.',
   userSide: ChessSide.white,
-  initialKeySquares: <String>{'a6', 'b6', 'c6', 'a7', 'b7', 'c7'},
+  initialKeySquares: const <String>{},
   theoreticalResult: _lesson02Learn.theoreticalResult,
-  comparisonOutcomes: keySquaresLesson02Positions
-      .where((position) => position.role != LessonPositionRole.learn)
-      .map(
-        (position) => LessonPositionOutcome(
-          fen: position.fen,
-          result: position.theoreticalResult,
-          teachingPoint: position.teachingPoint,
-        ),
-      )
-      .toList(growable: false),
+  comparisonOutcomes: _comparisonOutcomesFrom(
+    keySquaresLesson02Positions,
+    initialFen: _lesson02Learn.fen,
+  ),
   difficulty: 1,
 );
 
@@ -74,16 +93,10 @@ final LessonDefinition keySquaresLesson03 = LessonDefinition(
   userSide: ChessSide.white,
   initialKeySquares: <String>{'a6', 'b6', 'c6'},
   theoreticalResult: _lesson03Learn.theoreticalResult,
-  comparisonOutcomes: keySquaresLesson03Positions
-      .where((position) => position.role != LessonPositionRole.learn)
-      .map(
-        (position) => LessonPositionOutcome(
-          fen: position.fen,
-          result: position.theoreticalResult,
-          teachingPoint: position.teachingPoint,
-        ),
-      )
-      .toList(growable: false),
+  comparisonOutcomes: _comparisonOutcomesFrom(
+    keySquaresLesson03Positions,
+    initialFen: _lesson03Learn.fen,
+  ),
   difficulty: 1,
 );
 
@@ -106,16 +119,10 @@ final LessonDefinition keySquaresLesson04 = LessonDefinition(
   userSide: ChessSide.white,
   initialKeySquares: <String>{'f4', 'g4', 'h4'},
   theoreticalResult: _lesson04Learn.theoreticalResult,
-  comparisonOutcomes: keySquaresLesson04Positions
-      .where((position) => position.role != LessonPositionRole.learn)
-      .map(
-        (position) => LessonPositionOutcome(
-          fen: position.fen,
-          result: position.theoreticalResult,
-          teachingPoint: position.teachingPoint,
-        ),
-      )
-      .toList(growable: false),
+  comparisonOutcomes: _comparisonOutcomesFrom(
+    keySquaresLesson04Positions,
+    initialFen: _lesson04Learn.fen,
+  ),
   difficulty: 1,
 );
 

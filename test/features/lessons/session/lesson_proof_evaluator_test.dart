@@ -8,9 +8,8 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   const evaluator = LessonProofEvaluator();
 
-  const whiteToMoveFen = '8/3k4/8/3P4/3K4/8/8/8 w - - 0 1';
-  const unsupportedBlackToMoveFen =
-      '8/3k4/8/3P4/3K4/8/8/8 b - - 0 1';
+  const whiteToMoveFen = '8/3k4/8/3K4/3P4/8/8/8 w - - 0 1';
+  const blackToMoveFen = '8/3k4/8/3K4/3P4/8/8/8 b - - 0 1';
 
   group('LessonProofEvaluator', () {
     test('White to move: draw passes', () {
@@ -41,28 +40,17 @@ void main() {
       expect(evaluation.passed, isFalse);
     });
 
-    test('White to move: loss fails because verified result is draw', () {
+    test('Black to move: White win passes', () {
       final evaluation = evaluator.evaluate(
         lesson: keySquaresLesson01,
-        proofFen: whiteToMoveFen,
-        actualOutcome: LessonSessionOutcome.loss,
-      );
-
-      expect(evaluation.expectedResult, TheoreticalResult.draw);
-      expect(evaluation.verdict, LessonProofVerdict.failed);
-    });
-
-    test('Black-to-move variant is unsupported rather than invented', () {
-      final evaluation = evaluator.evaluate(
-        lesson: keySquaresLesson01,
-        proofFen: unsupportedBlackToMoveFen,
+        proofFen: blackToMoveFen,
         actualOutcome: LessonSessionOutcome.win,
       );
 
-      expect(evaluation.proofFen, unsupportedBlackToMoveFen);
-      expect(evaluation.expectedResult, isNull);
-      expect(evaluation.verdict, LessonProofVerdict.unsupported);
-      expect(evaluation.isSupported, isFalse);
+      expect(evaluation.proofFen, blackToMoveFen);
+      expect(evaluation.expectedResult, TheoreticalResult.win);
+      expect(evaluation.verdict, LessonProofVerdict.passed);
+      expect(evaluation.isSupported, isTrue);
     });
 
     test('side to move remains part of proof truth', () {
@@ -74,15 +62,14 @@ void main() {
 
       final blackToMove = evaluator.evaluate(
         lesson: keySquaresLesson01,
-        proofFen: unsupportedBlackToMoveFen,
+        proofFen: blackToMoveFen,
         actualOutcome: LessonSessionOutcome.draw,
       );
 
       expect(whiteToMove.verdict, LessonProofVerdict.passed);
-      expect(blackToMove.verdict, LessonProofVerdict.unsupported);
-
+      expect(blackToMove.verdict, LessonProofVerdict.failed);
       expect(whiteToMove.expectedResult, TheoreticalResult.draw);
-      expect(blackToMove.expectedResult, isNull);
+      expect(blackToMove.expectedResult, TheoreticalResult.win);
     });
 
     test('unknown FEN is unsupported instead of guessed', () {

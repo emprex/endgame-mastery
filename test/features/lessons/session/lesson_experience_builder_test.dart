@@ -12,9 +12,8 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   const builder = LessonExperienceBuilder();
 
-  const whiteToMoveFen = '8/3k4/8/3P4/3K4/8/8/8 w - - 0 1';
-  const unsupportedBlackToMoveFen =
-      '8/3k4/8/3P4/3K4/8/8/8 b - - 0 1';
+  const whiteToMoveFen = '8/3k4/8/3K4/3P4/8/8/8 w - - 0 1';
+  const blackToMoveFen = '8/3k4/8/3K4/3P4/8/8/8 b - - 0 1';
 
   LessonDefinition testLesson(String id) {
     return LessonDefinition(
@@ -25,14 +24,7 @@ void main() {
       objective: 'Integration contract test.',
       learnText: 'Integration contract test.',
       userSide: ChessSide.white,
-      initialKeySquares: const <String>{
-        'c6',
-        'd6',
-        'e6',
-        'c7',
-        'd7',
-        'e7',
-      },
+      initialKeySquares: const <String>{'c6', 'd6', 'e6'},
       theoreticalResult: TheoreticalResult.draw,
       difficulty: 1,
     );
@@ -56,7 +48,7 @@ void main() {
       expect(experience.isCurriculumEnd, isFalse);
     });
 
-    test('Practice preserves the verified exact draw position', () {
+    test('Practice supports same geometry with Black to move', () {
       final session = LessonSessionState(
         lesson: keySquaresLesson01,
         stage: LessonStage.practice,
@@ -64,12 +56,12 @@ void main() {
 
       final experience = builder.build(
         session: session,
-        currentFen: whiteToMoveFen,
+        currentFen: blackToMoveFen,
       );
 
       expect(experience.stage, LessonStage.practice);
-      expect(experience.teaching.fen, whiteToMoveFen);
-      expect(experience.teaching.theoreticalResult, TheoreticalResult.draw);
+      expect(experience.teaching.fen, blackToMoveFen);
+      expect(experience.teaching.theoreticalResult, TheoreticalResult.win);
     });
 
     test('Result evaluates exact proof starting FEN', () {
@@ -88,21 +80,6 @@ void main() {
       expect(experience.hasProofEvaluation, isTrue);
       expect(experience.proofEvaluation!.verdict, LessonProofVerdict.passed);
       expect(experience.proofEvaluation!.expectedResult, TheoreticalResult.draw);
-    });
-
-    test('unsupported changed FEN remains unsupported', () {
-      final session = LessonSessionState(
-        lesson: keySquaresLesson01,
-        stage: LessonStage.practice,
-      );
-
-      final experience = builder.build(
-        session: session,
-        currentFen: unsupportedBlackToMoveFen,
-      );
-
-      expect(experience.teaching.fen, unsupportedBlackToMoveFen);
-      expect(experience.teaching.theoreticalResult, isNull);
     });
 
     test('unknown proof FEN remains unsupported', () {
@@ -124,7 +101,6 @@ void main() {
         experience.proofEvaluation!.verdict,
         LessonProofVerdict.unsupported,
       );
-
       expect(experience.proofEvaluation!.expectedResult, isNull);
     });
 
@@ -180,7 +156,7 @@ void main() {
       final session = LessonSessionState(
         lesson: keySquaresLesson02,
         stage: LessonStage.completed,
-        outcome: LessonSessionOutcome.draw,
+        outcome: LessonSessionOutcome.win,
       );
 
       final experience = builder.build(

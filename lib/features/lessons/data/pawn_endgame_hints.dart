@@ -48,3 +48,21 @@ final LessonHints keySquaresLesson04Hints = LessonHints(
   targeted:
       'Watch Black\'s h-pawn and prepare for the moment when changing the white pawn structure brings the new key squares closer to your king.',
 );
+
+final LessonHints pawnTragicomedyLesson05Hints = LessonHints(
+  concept:
+      'Losing a pawn does not automatically mean losing the game. Evaluate the position that remains before deciding the result.',
+  visual:
+      'Look beyond the d5-pawn: compare both kings and the remaining black d-pawn after exchanges become possible.',
+  targeted:
+      'Before resigning, calculate the king-and-pawn ending that remains if the d5-pawn falls.',
+);
+
+final LessonHints pawnTragicomedyLesson06Hints = LessonHints(
+  concept:
+      'In technical endings, every rook move can change the enemy king\'s access. Check the opponent\'s most forcing king move first.',
+  visual:
+      'Focus on the black king on g6 and the route toward g5 before moving the white rook.',
+  targeted:
+      'Avoid an automatic rook move that gives Black immediate king penetration; calculate ...Kg5 before committing the rook.',
+);

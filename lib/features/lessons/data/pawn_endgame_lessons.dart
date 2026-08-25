@@ -3,7 +3,7 @@ import '../domain/lesson_position_definition.dart';
 import 'pawn_endgame_positions.dart';
 
 final LessonDefinition keySquaresLesson01 = LessonDefinition(
-  id: 'pawn-key-squares-01',
+  id: keySquaresLesson01Id,
   title: 'Key Squares',
   fen: '8/3k4/8/3K4/3P4/8/8/8 w - - 0 1',
   concept: LessonConcept.keySquares,
@@ -34,13 +34,14 @@ final LessonDefinition keySquaresLesson02 = LessonDefinition(
   title: 'The Fifth Rank',
   fen: _lesson02Learn.fen,
   concept: LessonConcept.keySquares,
-  objective: 'Understand how the key-square zone expands when the pawn reaches the fifth rank.',
+  objective:
+      'Understand the six key squares of a fifth-rank pawn and why reaching one establishes a theoretical win without ending the conversion task.',
   learnText:
-      'When a non-rook pawn reaches the fifth rank, its key-square zone expands. '
-      'For the white pawn on d5, the six key squares are c6, d6, e6, c7, d7, and e7. '
-      'The king should use this larger target zone to support the pawn toward promotion.',
+      'For the white pawn on b5, the six key squares are a6, b6, c6, a7, b7, and c7. '
+      'In this position the white king already stands on b6, so White has reached a key square and the position is theoretically won. '
+      'That does not mean every continuation is equally precise: White still has to convert accurately and avoid defensive resources such as stalemate.',
   userSide: ChessSide.white,
-  initialKeySquares: <String>{'c6', 'd6', 'e6', 'c7', 'd7', 'e7'},
+  initialKeySquares: <String>{'a6', 'b6', 'c6', 'a7', 'b7', 'c7'},
   theoreticalResult: _lesson02Learn.theoreticalResult,
   comparisonOutcomes: keySquaresLesson02Positions
       .where((position) => position.role != LessonPositionRole.learn)
@@ -50,6 +51,7 @@ final LessonDefinition keySquaresLesson02 = LessonDefinition(
           result: position.theoreticalResult,
           teachingPoint: position.teachingPoint,
         ),
-      ),
+      )
+      .toList(growable: false),
   difficulty: 1,
 );

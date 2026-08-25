@@ -57,6 +57,7 @@ class _LessonExperienceScreenState extends State<LessonExperienceScreen> {
   late String _currentFen;
 
   String? _proofFen;
+  ChessSide? _pendingPromotionMover;
 
   int _boardRevision = 0;
   int _practicePositionIndex = 0;
@@ -70,6 +71,13 @@ class _LessonExperienceScreenState extends State<LessonExperienceScreen> {
     _progression = LessonProgression(curriculum);
 
     _loadLesson(_progression.firstLesson, rebuild: false);
+  }
+
+  void _trace(String message) {
+    debugPrint(
+      '[LESSON_FLOW] lesson=${_currentLesson.id} '
+      'stage=${_sessionController.state.stage.name} $message',
+    );
   }
 
   LessonHints _hintsForLesson(LessonDefinition lesson) {
@@ -129,9 +137,12 @@ class _LessonExperienceScreenState extends State<LessonExperienceScreen> {
     );
 
     _proofFen = null;
+    _pendingPromotionMover = null;
     _practicePositionIndex = 0;
     _mobilePanelExpanded = true;
     _boardRevision++;
+
+    _trace('LOAD fen=$_currentFen');
 
     if (rebuild) {
       setState(() {});
@@ -160,6 +171,8 @@ class _LessonExperienceScreenState extends State<LessonExperienceScreen> {
 
     _sessionController.startPractice();
 
+    _trace('START_PRACTICE fen=$practiceFen');
+
     setState(() {
       _currentFen = practiceFen;
       _mobilePanelExpanded = false;
@@ -185,6 +198,8 @@ class _LessonExperienceScreenState extends State<LessonExperienceScreen> {
       _hintController.reset();
 
       _moveExplanationController.reset(nextFen);
+
+      _trace('NEXT_PRACTICE index=$_practicePositionIndex fen=$nextFen');
 
       setState(() {
         _currentFen = nextFen;
@@ -212,9 +227,12 @@ class _LessonExperienceScreenState extends State<LessonExperienceScreen> {
 
     _sessionController.startProve();
 
+    _trace('START_PROVE fen=$proveFen');
+
     setState(() {
       _currentFen = proveFen;
       _proofFen = proveFen;
+      _pendingPromotionMover = null;
       _mobilePanelExpanded = false;
       _boardRevision++;
     });
@@ -232,21 +250,13 @@ class _LessonExperienceScreenState extends State<LessonExperienceScreen> {
     if (move.promotion != null &&
         _sessionController.state.stage == LessonStage.prove) {
       final fields = _currentFen.trim().split(RegExp(r'\s+'));
-      final moverSide = fields.length > 1 && fields[1] == 'b'
+      _pendingPromotionMover = fields.length > 1 && fields[1] == 'b'
           ? ChessSide.black
           : ChessSide.white;
 
-      final outcome = moverSide == _currentLesson.userSide
-          ? LessonSessionOutcome.win
-          : LessonSessionOutcome.loss;
-
-      _sessionController.completeProof(outcome);
-
-      setState(() {
-        _mobilePanelExpanded = true;
-        _boardRevision++;
-      });
-      return;
+      _trace(
+        'PROMOTION_PENDING move=${move.uci} mover=${_pendingPromotionMover!.name}',
+      );
     }
 
     setState(() {});
@@ -280,6 +290,7 @@ class _LessonExperienceScreenState extends State<LessonExperienceScreen> {
 
   void _completeLesson() {
     _sessionController.completeLesson();
+    _trace('COMPLETE_LESSON');
 
     setState(() {
       _mobilePanelExpanded = true;
@@ -290,9 +301,11 @@ class _LessonExperienceScreenState extends State<LessonExperienceScreen> {
     final nextLesson = _progression.nextLessonFor(_sessionController.state);
 
     if (nextLesson == null) {
+      _trace('NO_NEXT_LESSON');
       return;
     }
 
+    _trace('OPEN_NEXT next=${nextLesson.id}');
     _loadLesson(nextLesson, rebuild: true);
   }
 
@@ -302,6 +315,26 @@ class _LessonExperienceScreenState extends State<LessonExperienceScreen> {
     }
 
     _moveExplanationController.onFenChanged(fen);
+
+    final promotionMover = _pendingPromotionMover;
+
+    if (promotionMover != null &&
+        _sessionController.state.stage == LessonStage.prove) {
+      final outcome = promotionMover == _currentLesson.userSide
+          ? LessonSessionOutcome.win
+          : LessonSessionOutcome.loss;
+
+      _pendingPromotionMover = null;
+      _sessionController.completeProof(outcome);
+      _trace('PROMOTION_COMPLETE outcome=${outcome.name} fen=$fen');
+
+      setState(() {
+        _currentFen = fen;
+        _mobilePanelExpanded = true;
+        _boardRevision++;
+      });
+      return;
+    }
 
     setState(() {
       _currentFen = fen;
@@ -319,7 +352,9 @@ class _LessonExperienceScreenState extends State<LessonExperienceScreen> {
       BoardGameResult.draw => LessonSessionOutcome.draw,
     };
 
+    _pendingPromotionMover = null;
     _sessionController.completeProof(outcome);
+    _trace('GAME_ENDED result=${result.name} outcome=${outcome.name}');
 
     setState(() {
       _mobilePanelExpanded = true;

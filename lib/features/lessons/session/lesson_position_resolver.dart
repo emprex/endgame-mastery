@@ -15,6 +15,10 @@ class LessonPositionResolver {
       return keySquaresLesson02Positions;
     }
 
+    if (lesson.id == keySquaresLesson03Id) {
+      return keySquaresLesson03Positions;
+    }
+
     return <LessonPositionDefinition>[
       LessonPositionDefinition(
         id: '${lesson.id}-default',

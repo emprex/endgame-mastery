@@ -8,9 +8,8 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   const evaluator = LessonProofEvaluator();
 
-  const whiteToMoveFen = '8/3k4/8/3K4/3P4/8/8/8 w - - 0 1';
-
-  const blackToMoveFen = '8/3k4/8/3K4/3P4/8/8/8 b - - 0 1';
+  const whiteToMoveFen = '8/3k4/8/3P4/3K4/8/8/8 w - - 0 1';
+  const blackToMoveFen = '8/3k4/8/3P4/3K4/8/8/8 b - - 0 1';
 
   group('LessonProofEvaluator', () {
     test('White to move: draw passes', () {
@@ -19,7 +18,6 @@ void main() {
         proofFen: whiteToMoveFen,
         actualOutcome: LessonSessionOutcome.draw,
       );
-
       expect(evaluation.proofFen, whiteToMoveFen);
       expect(evaluation.expectedResult, TheoreticalResult.draw);
       expect(evaluation.actualOutcome, LessonSessionOutcome.draw);
@@ -34,7 +32,6 @@ void main() {
         proofFen: whiteToMoveFen,
         actualOutcome: LessonSessionOutcome.win,
       );
-
       expect(evaluation.expectedResult, TheoreticalResult.draw);
       expect(evaluation.actualOutcome, LessonSessionOutcome.win);
       expect(evaluation.verdict, LessonProofVerdict.failed);
@@ -47,7 +44,6 @@ void main() {
         proofFen: whiteToMoveFen,
         actualOutcome: LessonSessionOutcome.loss,
       );
-
       expect(evaluation.expectedResult, TheoreticalResult.draw);
       expect(evaluation.verdict, LessonProofVerdict.failed);
     });
@@ -58,7 +54,6 @@ void main() {
         proofFen: blackToMoveFen,
         actualOutcome: LessonSessionOutcome.win,
       );
-
       expect(evaluation.proofFen, blackToMoveFen);
       expect(evaluation.expectedResult, TheoreticalResult.win);
       expect(evaluation.actualOutcome, LessonSessionOutcome.win);
@@ -71,7 +66,6 @@ void main() {
         proofFen: blackToMoveFen,
         actualOutcome: LessonSessionOutcome.draw,
       );
-
       expect(evaluation.expectedResult, TheoreticalResult.win);
       expect(evaluation.verdict, LessonProofVerdict.failed);
     });
@@ -82,29 +76,24 @@ void main() {
         proofFen: whiteToMoveFen,
         actualOutcome: LessonSessionOutcome.draw,
       );
-
       final blackToMove = evaluator.evaluate(
         lesson: keySquaresLesson01,
         proofFen: blackToMoveFen,
         actualOutcome: LessonSessionOutcome.draw,
       );
-
       expect(whiteToMove.verdict, LessonProofVerdict.passed);
       expect(blackToMove.verdict, LessonProofVerdict.failed);
-
       expect(whiteToMove.expectedResult, TheoreticalResult.draw);
       expect(blackToMove.expectedResult, TheoreticalResult.win);
     });
 
     test('unknown FEN is unsupported instead of guessed', () {
-      const unknownFen = '8/3k4/8/4K3/3P4/8/8/8 w - - 0 1';
-
+      const unknownFen = '8/3k4/8/4P3/3K4/8/8/8 w - - 0 1';
       final evaluation = evaluator.evaluate(
         lesson: keySquaresLesson01,
         proofFen: unknownFen,
         actualOutcome: LessonSessionOutcome.win,
       );
-
       expect(evaluation.proofFen, unknownFen);
       expect(evaluation.expectedResult, isNull);
       expect(evaluation.verdict, LessonProofVerdict.unsupported);
@@ -118,7 +107,6 @@ void main() {
         proofFen: '  $whiteToMoveFen  ',
         actualOutcome: LessonSessionOutcome.draw,
       );
-
       expect(evaluation.proofFen, whiteToMoveFen);
       expect(evaluation.verdict, LessonProofVerdict.passed);
     });

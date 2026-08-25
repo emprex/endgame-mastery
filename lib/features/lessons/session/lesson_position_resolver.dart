@@ -23,6 +23,14 @@ class LessonPositionResolver {
       return keySquaresLesson04Positions;
     }
 
+    if (lesson.id == pawnTragicomedyLesson05Id) {
+      return pawnTragicomedyLesson05Positions;
+    }
+
+    if (lesson.id == pawnTragicomedyLesson06Id) {
+      return pawnTragicomedyLesson06Positions;
+    }
+
     return <LessonPositionDefinition>[
       LessonPositionDefinition(
         id: '${lesson.id}-default',

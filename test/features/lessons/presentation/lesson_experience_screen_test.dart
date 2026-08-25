@@ -18,7 +18,7 @@ void main() {
     await tester.pumpWidget(buildScreen());
 
     expect(find.text('LEARN'), findsOneWidget);
-    expect(find.text('Key Squares: Fifth-Rank Pawn'), findsOneWidget);
+    expect(find.text('Key Squares'), findsOneWidget);
     expect(find.text('Start Practice'), findsOneWidget);
 
     final gate = tester.widget<IgnorePointer>(
@@ -76,11 +76,9 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(tester.takeException(), isNull);
-
-    expect(find.text('Key Squares: Fifth-Rank Pawn'), findsOneWidget);
+    expect(find.text('Key Squares'), findsOneWidget);
 
     final startPractice = find.text('Start Practice');
-
     expect(startPractice, findsOneWidget);
 
     await tester.ensureVisible(startPractice);
@@ -102,9 +100,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(tester.takeException(), isNull);
-
     expect(find.text('LEARN'), findsOneWidget);
-
     expect(find.byKey(const ValueKey<String>('test-board')), findsOneWidget);
   });
 
@@ -139,7 +135,6 @@ void main() {
 
     expect(find.text('PRACTICE'), findsNothing);
     expect(find.text('Start Prove'), findsNothing);
-
     expect(find.text('PROVE'), findsOneWidget);
     expect(find.text('Prove it'), findsOneWidget);
     expect(find.text('Prove the theoretical result.'), findsOneWidget);
@@ -157,7 +152,6 @@ void main() {
     );
 
     expect(gateDuringProve.ignoring, isFalse);
-
     expect(
       find.byKey(const ValueKey<String>('lesson-hint-button')),
       findsOneWidget,

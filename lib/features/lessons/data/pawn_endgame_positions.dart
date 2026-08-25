@@ -14,28 +14,28 @@ final List<LessonPositionDefinition> keySquaresLesson01Positions =
         id: 'pawn-key-squares-01a',
         lessonId: keySquaresLesson01Id,
         role: LessonPositionRole.learn,
-        fen: '8/3k4/8/3P4/3K4/8/8/8 w - - 0 1',
+        fen: '8/3k4/8/3K4/3P4/8/8/8 w - - 0 1',
         theoreticalResult: TheoreticalResult.draw,
         teachingPoint:
-            'Study the exact first position requested for the course: White has the pawn on d5, king on d4, Black king on d7, and White to move.',
+            'Dvoretsky Diagram 1-1: White king d5, white pawn d4, Black king d7, White to move. The key squares are c6, d6, and e6.',
       ),
       LessonPositionDefinition(
         id: 'pawn-key-squares-01b',
         lessonId: keySquaresLesson01Id,
         role: LessonPositionRole.practice,
-        fen: '8/3k4/8/3P4/3K4/8/8/8 w - - 0 1',
-        theoreticalResult: TheoreticalResult.draw,
+        fen: '8/3k4/8/3K4/3P4/8/8/8 b - - 0 1',
+        theoreticalResult: TheoreticalResult.win,
         teachingPoint:
-            'Practice the same exact position and preserve the draw against accurate defence.',
+            'Same exact Diagram 1-1 geometry with Black to move: Black must retreat and White can enter a key square.',
       ),
       LessonPositionDefinition(
         id: 'pawn-key-squares-01c',
         lessonId: keySquaresLesson01Id,
         role: LessonPositionRole.prove,
-        fen: '8/3k4/8/3P4/3K4/8/8/8 w - - 0 1',
+        fen: '8/3k4/8/3K4/3P4/8/8/8 w - - 0 1',
         theoreticalResult: TheoreticalResult.draw,
         teachingPoint:
-            'Play the exact position to a genuine chess conclusion and prove the theoretical draw.',
+            'Play the exact Diagram 1-1 position to a genuine chess conclusion and prove the theoretical draw with White to move.',
       ),
     ]);
 

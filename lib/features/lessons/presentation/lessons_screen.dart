@@ -1,15 +1,20 @@
 import 'package:endgame_mastery/features/lessons/data/curriculum.dart';
 import 'package:endgame_mastery/features/lessons/domain/lesson_definition.dart';
-import 'package:endgame_mastery/features/lessons/presentation/lesson_experience_screen.dart';
+import 'package:endgame_mastery/features/lessons/presentation/lesson_route_screen.dart';
 import 'package:flutter/material.dart';
 
 class LessonsScreen extends StatelessWidget {
   const LessonsScreen({super.key});
 
-  void _openLesson(BuildContext context, LessonDefinition lesson) {
+  void _openLesson(
+    BuildContext context,
+    LessonDefinition lesson,
+    int lessonNumber,
+  ) {
     Navigator.of(context).push(
       MaterialPageRoute<void>(
-        builder: (_) => LessonExperienceScreen(initialLesson: lesson),
+        builder: (_) =>
+            LessonRouteScreen(lesson: lesson, lessonNumber: lessonNumber),
       ),
     );
   }
@@ -51,7 +56,8 @@ class LessonsScreen extends StatelessWidget {
                   _LessonCard(
                     index: index,
                     lesson: curriculum[index],
-                    onTap: () => _openLesson(context, curriculum[index]),
+                    onTap: () =>
+                        _openLesson(context, curriculum[index], index + 1),
                   ),
                   if (index < curriculum.length - 1) const SizedBox(height: 12),
                 ],
@@ -81,6 +87,7 @@ class _LessonCard extends StatelessWidget {
       color: const Color(0xFF232323),
       borderRadius: BorderRadius.circular(18),
       child: InkWell(
+        key: ValueKey<String>('lesson-card-${lesson.id}'),
         onTap: onTap,
         borderRadius: BorderRadius.circular(18),
         child: Padding(

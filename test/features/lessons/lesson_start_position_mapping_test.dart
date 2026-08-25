@@ -5,17 +5,23 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('Exact first six lesson positions', () {
-    test('lesson 1 starts from the requested d-pawn position', () {
-      const fen = '8/3k4/8/3P4/3K4/8/8/8 w - - 0 1';
+    test('lesson 1 starts from Diagram 1-1: Kd5 Pd4 vs Kd7', () {
+      const fen = '8/3k4/8/3K4/3P4/8/8/8 w - - 0 1';
       expect(keySquaresLesson01.fen, fen);
 
       final controller = ChessController(fen: fen);
-      expect(controller.pieceVisualAt('d7')?.isWhite, isFalse);
-      expect(controller.pieceVisualAt('d5')?.type, BoardPieceType.pawn);
-      expect(controller.pieceVisualAt('d5')?.isWhite, isTrue);
-      expect(controller.pieceVisualAt('d4')?.type, BoardPieceType.king);
-      expect(controller.pieceVisualAt('d4')?.isWhite, isTrue);
+      final blackKing = controller.pieceVisualAt('d7');
+      final whiteKing = controller.pieceVisualAt('d5');
+      final whitePawn = controller.pieceVisualAt('d4');
+
+      expect(blackKing?.type, BoardPieceType.king);
+      expect(blackKing?.isWhite, isFalse);
+      expect(whiteKing?.type, BoardPieceType.king);
+      expect(whiteKing?.isWhite, isTrue);
+      expect(whitePawn?.type, BoardPieceType.pawn);
+      expect(whitePawn?.isWhite, isTrue);
       expect(controller.isWhiteToMove(), isTrue);
+      expect(keySquaresLesson01.initialKeySquares, <String>{'c6', 'd6', 'e6'});
     });
 
     test('lesson 2 starts from Diagram 1-2: Kb6 Pb5 vs Kb8', () {
@@ -41,6 +47,13 @@ void main() {
       expect(keySquaresLesson04.fen, '2k5/8/8/7p/8/8/6P1/5K2 w - - 0 1');
       expect(pawnTragicomedyLesson05.fen, '8/8/3p4/3P4/5k2/3K4/8/8 w - - 0 1');
       expect(pawnTragicomedyLesson06.fen, '8/8/5pk1/5r2/R7/5K2/8/8 w - - 0 1');
+    });
+
+    test('lesson 1 practice preserves board geometry and changes only side to move', () {
+      final practice = keySquaresLesson01Positions.singleWhere(
+        (position) => position.id == 'pawn-key-squares-01b',
+      );
+      expect(practice.fen, '8/3k4/8/3K4/3P4/8/8/8 b - - 0 1');
     });
 
     test('lesson 2 prove returns to the exact Diagram 1-2 position', () {

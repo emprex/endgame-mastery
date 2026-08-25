@@ -1,6 +1,5 @@
 import 'package:endgame_mastery/core/chess/chess_controller.dart';
 import 'package:endgame_mastery/features/lessons/data/pawn_endgame_positions.dart';
-import 'package:endgame_mastery/features/lessons/domain/lesson_position_definition.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

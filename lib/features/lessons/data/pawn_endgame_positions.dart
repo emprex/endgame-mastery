@@ -137,67 +137,104 @@ final List<LessonPositionDefinition> keySquaresLesson04Positions =
         fen: '2k5/8/8/7p/8/8/6P1/5K2 w - - 0 1',
         theoreticalResult: TheoreticalResult.win,
         teachingPoint:
-            'In Dvoretsky Diagram 1-4, White must anticipate how pawn moves will change the key-square geometry.',
+            'Dvoretsky Diagram 1-4: 1.Kf2! is the accurate start. White must anticipate how the h-pawn changes the key-square geometry.',
       ),
       LessonPositionDefinition(
         id: 'pawn-key-squares-04b',
         lessonId: keySquaresLesson04Id,
         role: LessonPositionRole.practice,
-        fen: '2k5/8/8/8/7p/8/5KP1/8 w - - 0 2',
+        fen: '2k5/8/8/7p/8/8/6P1/5K2 w - - 0 1',
         theoreticalResult: TheoreticalResult.win,
         teachingPoint:
-            'After Kf2 and ...h4, White must prepare for ...h3. The natural Kf3 route is refuted by that pawn advance.',
+            'Begin practice from the exact Diagram 1-4 position. Find the king move that keeps White in time against the h-pawn.',
       ),
       LessonPositionDefinition(
         id: 'pawn-key-squares-04c',
         lessonId: keySquaresLesson04Id,
         role: LessonPositionRole.practice,
-        fen: '2k5/8/8/8/8/7p/6P1/6K1 w - - 0 3',
+        fen: '2k5/8/8/8/7p/8/5KP1/8 w - - 0 2',
         theoreticalResult: TheoreticalResult.win,
         teachingPoint:
-            'After Kf2 h4, Kg1 h3, White should change the pawn structure with g3 so that the new key squares are closer to the white king.',
+            'After 1.Kf2 h4, Dvoretsky gives 2.Kg1!!. The natural 2.Kf3? is refuted by 2...h3!.',
       ),
       LessonPositionDefinition(
         id: 'pawn-key-squares-04d',
+        lessonId: keySquaresLesson04Id,
+        role: LessonPositionRole.practice,
+        fen: '2k5/8/8/8/8/7p/6P1/6K1 w - - 0 3',
+        theoreticalResult: TheoreticalResult.win,
+        teachingPoint:
+            'After 1.Kf2 h4 2.Kg1 h3, White changes the pawn structure with 3.g3!, moving the key squares closer to the king.',
+      ),
+      LessonPositionDefinition(
+        id: 'pawn-key-squares-04e',
         lessonId: keySquaresLesson04Id,
         role: LessonPositionRole.prove,
         fen: '2k5/8/8/7p/8/8/6P1/5K2 w - - 0 1',
         theoreticalResult: TheoreticalResult.win,
         teachingPoint:
-            'Play out the exact Diagram 1-4 position and convert by recalculating key squares when the pawn structure changes.',
+            'Play the exact Diagram 1-4 position to a genuine conclusion and prove the win by recalculating key squares as the pawn structure changes.',
       ),
     ]);
 
-const _tragicomedyRoles = <LessonPositionRole>[
-  LessonPositionRole.learn,
-  LessonPositionRole.practice,
-  LessonPositionRole.prove,
-];
-
 final List<LessonPositionDefinition> pawnTragicomedyLesson05Positions =
     List<LessonPositionDefinition>.unmodifiable(<LessonPositionDefinition>[
-      for (final role in _tragicomedyRoles)
-        LessonPositionDefinition(
-          id: 'pawn-tragicomedy-05-${role.name}',
-          lessonId: pawnTragicomedyLesson05Id,
-          role: role,
-          fen: '8/8/3p4/3P4/5k2/3K4/8/8 w - - 0 1',
-          theoreticalResult: TheoreticalResult.draw,
-          teachingPoint:
-              'Dvoretsky Diagram 1-5 is a practical warning: do not resign merely because a pawn must be lost. Reassess the resulting pawn ending first.',
-        ),
+      LessonPositionDefinition(
+        id: 'pawn-tragicomedy-05-learn',
+        lessonId: pawnTragicomedyLesson05Id,
+        role: LessonPositionRole.learn,
+        fen: '8/8/3p4/3P4/5k2/3K4/8/8 w - - 0 1',
+        theoreticalResult: TheoreticalResult.draw,
+        teachingPoint:
+            'Dvoretsky Diagram 1-5, Coull-Stanciu: White resigned because the d5-pawn must fall. The lesson is to evaluate the resulting pawn ending before resigning.',
+      ),
+      LessonPositionDefinition(
+        id: 'pawn-tragicomedy-05-practice',
+        lessonId: pawnTragicomedyLesson05Id,
+        role: LessonPositionRole.practice,
+        fen: '8/8/3p4/3P4/5k2/3K4/8/8 w - - 0 1',
+        theoreticalResult: TheoreticalResult.draw,
+        teachingPoint:
+            'Start from the exact Coull-Stanciu position and keep playing instead of treating the loss of d5 as the end of the game.',
+      ),
+      LessonPositionDefinition(
+        id: 'pawn-tragicomedy-05-prove',
+        lessonId: pawnTragicomedyLesson05Id,
+        role: LessonPositionRole.prove,
+        fen: '8/8/3p4/3P4/5k2/3K4/8/8 w - - 0 1',
+        theoreticalResult: TheoreticalResult.draw,
+        teachingPoint:
+            'Play the exact Diagram 1-5 position to a genuine conclusion and demonstrate why resigning immediately is unjustified.',
+      ),
     ]);
 
 final List<LessonPositionDefinition> pawnTragicomedyLesson06Positions =
     List<LessonPositionDefinition>.unmodifiable(<LessonPositionDefinition>[
-      for (final role in _tragicomedyRoles)
-        LessonPositionDefinition(
-          id: 'pawn-tragicomedy-06-${role.name}',
-          lessonId: pawnTragicomedyLesson06Id,
-          role: role,
-          fen: '8/8/5pk1/5r2/R7/5K2/8/8 w - - 0 1',
-          theoreticalResult: TheoreticalResult.draw,
-          teachingPoint:
-              'Dvoretsky Diagram 1-6 is the final practical warning before Corresponding Squares: 1.Rf4?? allows ...Kg5! and White resigned.',
-        ),
+      LessonPositionDefinition(
+        id: 'pawn-tragicomedy-06-learn',
+        lessonId: pawnTragicomedyLesson06Id,
+        role: LessonPositionRole.learn,
+        fen: '8/8/5pk1/5r2/R7/5K2/8/8 w - - 0 1',
+        theoreticalResult: TheoreticalResult.draw,
+        teachingPoint:
+            'Dvoretsky Diagram 1-6, Spielmann-Duras: 1.Rf4?? allows 1...Kg5!, after which White resigned.',
+      ),
+      LessonPositionDefinition(
+        id: 'pawn-tragicomedy-06-practice',
+        lessonId: pawnTragicomedyLesson06Id,
+        role: LessonPositionRole.practice,
+        fen: '8/8/5pk1/5r2/R7/5K2/8/8 w - - 0 1',
+        theoreticalResult: TheoreticalResult.draw,
+        teachingPoint:
+            'Start from the exact Spielmann-Duras position. Before moving the rook, check whether the move grants Black immediate king penetration with ...Kg5.',
+      ),
+      LessonPositionDefinition(
+        id: 'pawn-tragicomedy-06-prove',
+        lessonId: pawnTragicomedyLesson06Id,
+        role: LessonPositionRole.prove,
+        fen: '8/8/5pk1/5r2/R7/5K2/8/8 w - - 0 1',
+        theoreticalResult: TheoreticalResult.draw,
+        teachingPoint:
+            'Play the exact Diagram 1-6 position to a genuine conclusion while avoiding the careless 1.Rf4?? king-penetration error.',
+      ),
     ]);

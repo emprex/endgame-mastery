@@ -152,5 +152,99 @@ void main() {
 
       expect(assessment, isNull);
     });
+
+    test('Diagram 1-4 recognizes Kf2 as the verified preparation', () {
+      const beforeFen = '2k5/8/8/7p/8/8/6P1/5K2 w - - 0 1';
+      const afterFen = '2k5/8/8/7p/8/8/5KP1/8 b - - 1 1';
+
+      final before = builder.build(lesson: keySquaresLesson04, fen: beforeFen);
+      final after = builder.build(lesson: keySquaresLesson04, fen: afterFen);
+
+      final assessment = rule.assess(
+        move: PlayedMove(from: 'f1', to: 'f2'),
+        before: before,
+        after: after,
+      );
+
+      expect(assessment, isNotNull);
+      expect(assessment!.quality, PedagogicalMoveQuality.reinforcesConcept);
+      expect(assessment.title, 'Prepare for the pawn structure to change');
+      expect(assessment.message, contains('Kf2'));
+    });
+
+    test('Diagram 1-4 flags the rejected Kg1 first move', () {
+      const beforeFen = '2k5/8/8/7p/8/8/6P1/5K2 w - - 0 1';
+      const afterFen = '2k5/8/8/7p/8/8/6P1/6K1 b - - 1 1';
+
+      final before = builder.build(lesson: keySquaresLesson04, fen: beforeFen);
+      final after = builder.build(lesson: keySquaresLesson04, fen: afterFen);
+
+      final assessment = rule.assess(
+        move: PlayedMove(from: 'f1', to: 'g1'),
+        before: before,
+        after: after,
+      );
+
+      expect(assessment, isNotNull);
+      expect(assessment!.quality, PedagogicalMoveQuality.needsAttention);
+      expect(assessment.title, 'Do not commit the king too early');
+    });
+
+    test('Diagram 1-4 recognizes Kg1 after h4 as the verified response', () {
+      const beforeFen = '2k5/8/8/8/7p/8/5KP1/8 w - - 0 2';
+      const afterFen = '2k5/8/8/8/7p/8/6P1/6K1 b - - 1 2';
+
+      final before = builder.build(lesson: keySquaresLesson04, fen: beforeFen);
+      final after = builder.build(lesson: keySquaresLesson04, fen: afterFen);
+
+      final assessment = rule.assess(
+        move: PlayedMove(from: 'f2', to: 'g1'),
+        before: before,
+        after: after,
+      );
+
+      expect(assessment, isNotNull);
+      expect(assessment!.quality, PedagogicalMoveQuality.reinforcesConcept);
+      expect(assessment.title, 'React to the changed structure');
+    });
+
+    test('Diagram 1-4 flags Kf3 because of the h3 resource', () {
+      const beforeFen = '2k5/8/8/8/7p/8/5KP1/8 w - - 0 2';
+      const afterFen = '2k5/8/8/8/7p/5K2/6P1/8 b - - 1 2';
+
+      final before = builder.build(lesson: keySquaresLesson04, fen: beforeFen);
+      final after = builder.build(lesson: keySquaresLesson04, fen: afterFen);
+
+      final assessment = rule.assess(
+        move: PlayedMove(from: 'f2', to: 'f3'),
+        before: before,
+        after: after,
+      );
+
+      expect(assessment, isNotNull);
+      expect(assessment!.quality, PedagogicalMoveQuality.needsAttention);
+      expect(assessment.title, 'The structure can change again');
+      expect(assessment.message, contains('...h3'));
+    });
+
+    test('Diagram 1-4 explains g3 as a key-square recalculation', () {
+      const beforeFen = '2k5/8/8/8/8/7p/6P1/6K1 w - - 0 3';
+      const afterFen = '2k5/8/8/8/8/6Pp/8/6K1 b - - 0 3';
+
+      final before = builder.build(lesson: keySquaresLesson04, fen: beforeFen);
+      final after = builder.build(lesson: keySquaresLesson04, fen: afterFen);
+
+      final assessment = rule.assess(
+        move: PlayedMove(from: 'g2', to: 'g3'),
+        before: before,
+        after: after,
+      );
+
+      expect(assessment, isNotNull);
+      expect(assessment!.quality, PedagogicalMoveQuality.reinforcesConcept);
+      expect(assessment.title, 'Recalculate the key squares');
+      expect(assessment.message, contains('f5, g5, and h5'));
+      expect(after.keySquares, <String>{'f5', 'g5', 'h5'});
+    });
   });
 }

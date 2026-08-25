@@ -14,6 +14,10 @@ class KeySquaresMoveAssessmentRule {
       '1k6/8/1K6/1P6/8/8/8/8 w';
   static const String _diagram12StalemateTrap =
       'k7/2K5/8/1P6/8/8/8/8 w';
+  static const String _diagram13Start =
+      '5k2/8/8/8/1P6/8/8/3K4 w';
+  static const String _diagram13RouteChoice =
+      '8/8/3k4/8/1P6/1K6/8/8 w';
 
   PedagogicalMoveAssessment? assess({
     required PlayedMove move,
@@ -24,6 +28,12 @@ class KeySquaresMoveAssessmentRule {
 
     if (diagram12Assessment != null) {
       return diagram12Assessment;
+    }
+
+    final diagram13Assessment = _assessDiagram13(move: move, before: before);
+
+    if (diagram13Assessment != null) {
+      return diagram13Assessment;
     }
 
     if (!_whiteKingWasOn(fen: before.fen, square: move.from)) {
@@ -86,6 +96,54 @@ class KeySquaresMoveAssessmentRule {
             'Pushing b6 here leaves the black king with no legal move while '
             'it is not in check: stalemate. Preserve the winning king route '
             'before advancing the pawn.',
+        source: PedagogicalAssessmentSource.curriculum,
+      );
+    }
+
+    return null;
+  }
+
+  PedagogicalMoveAssessment? _assessDiagram13({
+    required PlayedMove move,
+    required TeachingState before,
+  }) {
+    final signature = _positionSignature(before.fen);
+
+    if (signature == _diagram13Start && move.uci == 'd1c2') {
+      return PedagogicalMoveAssessment(
+        move: move,
+        quality: PedagogicalMoveQuality.reinforcesConcept,
+        title: 'Head toward the hardest key square',
+        message:
+            'Kc2 starts the verified route toward a6, the key square farthest '
+            'from the defending king. The point is to choose the key square '
+            'that is hardest for Black to defend.',
+        source: PedagogicalAssessmentSource.curriculum,
+      );
+    }
+
+    if (signature == _diagram13RouteChoice && move.uci == 'b3a4') {
+      return PedagogicalMoveAssessment(
+        move: move,
+        quality: PedagogicalMoveQuality.reinforcesConcept,
+        title: 'Keep heading for a6',
+        message:
+            'Ka4 follows Dvoretsky\'s route toward a6, the key square farthest '
+            'from the black king. White keeps the defender stretched as the '
+            'king approaches the target square.',
+        source: PedagogicalAssessmentSource.curriculum,
+      );
+    }
+
+    if (signature == _diagram13RouteChoice && move.uci == 'b3c4') {
+      return PedagogicalMoveAssessment(
+        move: move,
+        quality: PedagogicalMoveQuality.needsAttention,
+        title: 'The defender can reach the key-square zone',
+        message:
+            'Kc4 is the natural error shown in the book. Black answers ...Kc6 '
+            'and reaches the key-square zone in time. The winning method is '
+            'to continue toward the more distant a6 square instead.',
         source: PedagogicalAssessmentSource.curriculum,
       );
     }

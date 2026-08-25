@@ -4,27 +4,22 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('LessonDefinition', () {
-    test(
-      'first Key Squares lesson preserves the Dvoretsky teaching position',
-      () {
-        expect(keySquaresLesson01.fen, '8/3k4/8/3K4/3P4/8/8/8 w - - 0 1');
+    test('first lesson preserves the corrected starting position', () {
+      expect(
+        keySquaresLesson01.fen,
+        '8/3k4/8/3P4/3K4/8/8/8 w - - 0 1',
+      );
+      expect(keySquaresLesson01.sideToMove, ChessSide.white);
+      expect(keySquaresLesson01.userSide, ChessSide.white);
+      expect(keySquaresLesson01.concept, LessonConcept.keySquares);
+      expect(keySquaresLesson01.theoreticalResult, TheoreticalResult.draw);
+      expect(keySquaresLesson01.difficulty, 1);
+    });
 
-        expect(keySquaresLesson01.sideToMove, ChessSide.white);
-
-        expect(keySquaresLesson01.userSide, ChessSide.white);
-
-        expect(keySquaresLesson01.concept, LessonConcept.keySquares);
-
-        expect(keySquaresLesson01.theoreticalResult, TheoreticalResult.draw);
-
-        expect(keySquaresLesson01.difficulty, 1);
-      },
-    );
-
-    test('initial Key Squares are c6 d6 and e6', () {
-      expect(keySquaresLesson01.initialKeySquares, <String>{'c6', 'd6', 'e6'});
-
-      // The king starts on d5, but d5 is not a key square.
+    test('first lesson exposes the six fifth-rank key squares', () {
+      expect(keySquaresLesson01.initialKeySquares, <String>{
+        'c6', 'd6', 'e6', 'c7', 'd7', 'e7',
+      });
       expect(keySquaresLesson01.initialKeySquares.contains('d5'), isFalse);
     });
 
@@ -32,16 +27,15 @@ void main() {
       final lesson = LessonDefinition(
         id: 'black-to-move-test',
         title: 'Black to move',
-        fen: '8/3k4/8/3K4/3P4/8/8/8 b - - 0 1',
+        fen: '8/3k4/8/3P4/3K4/8/8/8 b - - 0 1',
         concept: LessonConcept.keySquares,
         objective: 'Test objective.',
         learnText: 'Test lesson.',
         userSide: ChessSide.white,
         initialKeySquares: const <String>{'c6', 'd6', 'e6'},
-        theoreticalResult: TheoreticalResult.win,
+        theoreticalResult: TheoreticalResult.draw,
         difficulty: 1,
       );
-
       expect(lesson.sideToMove, ChessSide.black);
     });
 
@@ -50,7 +44,7 @@ void main() {
         () => LessonDefinition(
           id: 'invalid-square',
           title: 'Invalid Square',
-          fen: '8/3k4/8/3K4/3P4/8/8/8 w - - 0 1',
+          fen: '8/3k4/8/3P4/3K4/8/8/8 w - - 0 1',
           concept: LessonConcept.keySquares,
           objective: 'Test objective.',
           learnText: 'Test lesson.',
@@ -68,7 +62,7 @@ void main() {
         () => LessonDefinition(
           id: 'duplicate-square',
           title: 'Duplicate Square',
-          fen: '8/3k4/8/3K4/3P4/8/8/8 w - - 0 1',
+          fen: '8/3k4/8/3P4/3K4/8/8/8 w - - 0 1',
           concept: LessonConcept.keySquares,
           objective: 'Test objective.',
           learnText: 'Test lesson.',
@@ -86,7 +80,7 @@ void main() {
         () => LessonDefinition(
           id: 'invalid-difficulty',
           title: 'Invalid Difficulty',
-          fen: '8/3k4/8/3K4/3P4/8/8/8 w - - 0 1',
+          fen: '8/3k4/8/3P4/3K4/8/8/8 w - - 0 1',
           concept: LessonConcept.keySquares,
           objective: 'Test objective.',
           learnText: 'Test lesson.',

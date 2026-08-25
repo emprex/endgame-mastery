@@ -31,18 +31,18 @@ final LessonPositionDefinition _lesson01Learn = keySquaresLesson01Positions
 
 final LessonDefinition keySquaresLesson01 = LessonDefinition(
   id: keySquaresLesson01Id,
-  title: 'Key Squares: Fifth-Rank Pawn',
+  title: 'Key Squares',
   fen: _lesson01Learn.fen,
   concept: LessonConcept.keySquares,
   objective:
-      'Read the key-square zone correctly for the exact d5-pawn position and hold the theoretical draw.',
+      'Recognize the three key squares for a fourth-rank pawn and understand why the side to move changes the result.',
   learnText:
-      'White has king d4 and pawn d5 against the black king on d7. '
-      'Because the pawn is already on the fifth rank, its key-square zone contains six squares: c6, d6, e6, c7, d7, and e7. '
-      'The black king already controls this zone. White to move must not confuse having an advanced pawn with having a forced win. '
-      'The practical task is to play accurately and preserve the theoretical draw.',
+      'White has king d5 and pawn d4 against the black king on d7. '
+      'The king on d5 is not yet on a key square. The key squares are c6, d6, and e6. '
+      'With White to move, White cannot enter one of them and the position is drawn. '
+      'With Black to move, Black must retreat and White can step onto a key square, which wins.',
   userSide: ChessSide.white,
-  initialKeySquares: <String>{'c6', 'd6', 'e6', 'c7', 'd7', 'e7'},
+  initialKeySquares: <String>{'c6', 'd6', 'e6'},
   theoreticalResult: _lesson01Learn.theoreticalResult,
   comparisonOutcomes: _comparisonOutcomesFrom(
     keySquaresLesson01Positions,

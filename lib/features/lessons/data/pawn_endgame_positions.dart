@@ -45,28 +45,37 @@ final List<LessonPositionDefinition> keySquaresLesson02Positions =
         id: 'pawn-key-squares-02a',
         lessonId: keySquaresLesson02Id,
         role: LessonPositionRole.learn,
-        fen: '1k6/8/1P6/1K6/8/8/8/8 w - - 0 1',
-        theoreticalResult: TheoreticalResult.draw,
+        fen: '1k6/8/1K6/1P6/8/8/8/8 w - - 0 1',
+        theoreticalResult: TheoreticalResult.win,
         teachingPoint:
-            'Study the exact second position requested for the course: White king b5, white pawn b6, Black king b8, White to move.',
+            'Dvoretsky Diagram 1-2: White king b6, white pawn b5, Black king b8, White to move. The white king already occupies a key square.',
       ),
       LessonPositionDefinition(
         id: 'pawn-key-squares-02b',
         lessonId: keySquaresLesson02Id,
         role: LessonPositionRole.practice,
-        fen: '1k6/8/1P6/1K6/8/8/8/8 w - - 0 1',
-        theoreticalResult: TheoreticalResult.draw,
+        fen: '8/k7/2K5/1P6/8/8/8/8 w - - 0 1',
+        theoreticalResult: TheoreticalResult.win,
         teachingPoint:
-            'Practice the exact position without importing unrelated variations.',
+            'This published continuation tests the less direct Kc6 route after Black reaches a7.',
       ),
       LessonPositionDefinition(
         id: 'pawn-key-squares-02c',
         lessonId: keySquaresLesson02Id,
-        role: LessonPositionRole.prove,
-        fen: '1k6/8/1P6/1K6/8/8/8/8 w - - 0 1',
-        theoreticalResult: TheoreticalResult.draw,
+        role: LessonPositionRole.practice,
+        fen: 'k7/2K5/8/1P6/8/8/8/8 w - - 0 1',
+        theoreticalResult: TheoreticalResult.win,
         teachingPoint:
-            'Play the exact second position to a genuine chess conclusion and prove the theoretical draw.',
+            'This published continuation tests the stalemate resource: advancing b6 immediately would stalemate Black.',
+      ),
+      LessonPositionDefinition(
+        id: 'pawn-key-squares-02d',
+        lessonId: keySquaresLesson02Id,
+        role: LessonPositionRole.prove,
+        fen: '1k6/8/1K6/1P6/8/8/8/8 w - - 0 1',
+        theoreticalResult: TheoreticalResult.win,
+        teachingPoint:
+            'Play out the exact Diagram 1-2 position and prove the win without allowing the stalemate resource.',
       ),
     ]);
 

@@ -18,6 +18,12 @@ class KeySquaresMoveAssessmentRule {
       '5k2/8/8/8/1P6/8/8/3K4 w';
   static const String _diagram13RouteChoice =
       '8/8/3k4/8/1P6/1K6/8/8 w';
+  static const String _diagram14Start =
+      '2k5/8/8/7p/8/8/6P1/5K2 w';
+  static const String _diagram14AfterH4 =
+      '2k5/8/8/8/7p/8/5KP1/8 w';
+  static const String _diagram14AfterH3 =
+      '2k5/8/8/8/8/7p/6P1/6K1 w';
 
   PedagogicalMoveAssessment? assess({
     required PlayedMove move,
@@ -34,6 +40,12 @@ class KeySquaresMoveAssessmentRule {
 
     if (diagram13Assessment != null) {
       return diagram13Assessment;
+    }
+
+    final diagram14Assessment = _assessDiagram14(move: move, before: before);
+
+    if (diagram14Assessment != null) {
+      return diagram14Assessment;
     }
 
     if (!_whiteKingWasOn(fen: before.fen, square: move.from)) {
@@ -144,6 +156,82 @@ class KeySquaresMoveAssessmentRule {
             'Kc4 is the natural error shown in the book. Black answers ...Kc6 '
             'and reaches the key-square zone in time. The winning method is '
             'to continue toward the more distant a6 square instead.',
+        source: PedagogicalAssessmentSource.curriculum,
+      );
+    }
+
+    return null;
+  }
+
+  PedagogicalMoveAssessment? _assessDiagram14({
+    required PlayedMove move,
+    required TeachingState before,
+  }) {
+    final signature = _positionSignature(before.fen);
+
+    if (signature == _diagram14Start && move.uci == 'f1f2') {
+      return PedagogicalMoveAssessment(
+        move: move,
+        quality: PedagogicalMoveQuality.reinforcesConcept,
+        title: 'Prepare for the pawn structure to change',
+        message:
+            'Kf2 is Dvoretsky\'s verified first move. White prepares to meet '
+            'the advance of the h-pawn without committing the king to the '
+            'wrong route.',
+        source: PedagogicalAssessmentSource.curriculum,
+      );
+    }
+
+    if (signature == _diagram14Start && move.uci == 'f1g1') {
+      return PedagogicalMoveAssessment(
+        move: move,
+        quality: PedagogicalMoveQuality.needsAttention,
+        title: 'Do not commit the king too early',
+        message:
+            'Kg1 is the natural move rejected in the book. It gives Black time '
+            'to bring the king closer to the kingside defense. Kf2 keeps the '
+            'winning plan flexible.',
+        source: PedagogicalAssessmentSource.curriculum,
+      );
+    }
+
+    if (signature == _diagram14AfterH4 && move.uci == 'f2g1') {
+      return PedagogicalMoveAssessment(
+        move: move,
+        quality: PedagogicalMoveQuality.reinforcesConcept,
+        title: 'React to the changed structure',
+        message:
+            'After ...h4, Kg1 is the verified response. The king placement is '
+            'chosen for the new pawn structure rather than by following a '
+            'fixed route from the initial position.',
+        source: PedagogicalAssessmentSource.curriculum,
+      );
+    }
+
+    if (signature == _diagram14AfterH4 && move.uci == 'f2f3') {
+      return PedagogicalMoveAssessment(
+        move: move,
+        quality: PedagogicalMoveQuality.needsAttention,
+        title: 'The structure can change again',
+        message:
+            'Kf3 is the natural error shown by Dvoretsky. Black has ...h3!, '
+            'and White no longer gets the favorable key-square setup by the '
+            'same method. Anticipate the next pawn move before choosing the '
+            'king route.',
+        source: PedagogicalAssessmentSource.curriculum,
+      );
+    }
+
+    if (signature == _diagram14AfterH3 && move.uci == 'g2g3') {
+      return PedagogicalMoveAssessment(
+        move: move,
+        quality: PedagogicalMoveQuality.reinforcesConcept,
+        title: 'Recalculate the key squares',
+        message:
+            'g3 changes the pawn structure. The white pawn is now on g3, so '
+            'its key squares are f5, g5, and h5. The key-square map belongs to '
+            'the current pawn structure and must be recalculated when that '
+            'structure changes.',
         source: PedagogicalAssessmentSource.curriculum,
       );
     }

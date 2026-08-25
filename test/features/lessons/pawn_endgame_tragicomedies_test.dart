@@ -13,24 +13,29 @@ void main() {
     const resolver = LessonPositionResolver();
     const overlayEngine = PedagogicalOverlayEngine();
 
-    test('preserves the exact Diagram 1-5 position', () {
+    test('preserves the exact Diagram 1-5 position and lesson purpose', () {
       const fen = '8/8/3p4/3P4/5k2/3K4/8/8 w - - 0 1';
 
       expect(pawnTragicomedyLesson05.fen, fen);
       expect(pawnTragicomedyLesson05.theoreticalResult, TheoreticalResult.draw);
       expect(pawnTragicomedyLesson05Positions.length, 3);
+      expect(pawnTragicomedyLesson05.learnText, contains('d5-pawn'));
+      expect(pawnTragicomedyLesson05.learnText, contains('resigned'));
+      expect(pawnTragicomedyLesson05.learnText, contains('calculation'));
 
       for (final position in pawnTragicomedyLesson05Positions) {
         expect(position.fen, fen);
       }
     });
 
-    test('preserves the exact Diagram 1-6 position', () {
+    test('preserves the exact Diagram 1-6 position and Rf4 Kg5 warning', () {
       const fen = '8/8/5pk1/5r2/R7/5K2/8/8 w - - 0 1';
 
       expect(pawnTragicomedyLesson06.fen, fen);
       expect(pawnTragicomedyLesson06.theoreticalResult, TheoreticalResult.draw);
       expect(pawnTragicomedyLesson06Positions.length, 3);
+      expect(pawnTragicomedyLesson06.learnText, contains('1.Rf4??'));
+      expect(pawnTragicomedyLesson06.learnText, contains('1...Kg5!'));
 
       for (final position in pawnTragicomedyLesson06Positions) {
         expect(position.fen, fen);
@@ -44,7 +49,7 @@ void main() {
       expect(curriculum[5].id, pawnTragicomedyLesson06.id);
     });
 
-    test('resolver exposes practice and prove positions for both checkpoints', () {
+    test('resolver keeps exact book positions for Practice and Prove', () {
       for (final lesson in <LessonDefinition>[
         pawnTragicomedyLesson05,
         pawnTragicomedyLesson06,

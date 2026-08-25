@@ -55,3 +55,34 @@ final LessonDefinition keySquaresLesson02 = LessonDefinition(
       .toList(growable: false),
   difficulty: 1,
 );
+
+final LessonPositionDefinition _lesson03Learn = keySquaresLesson03Positions
+    .singleWhere((position) => position.role == LessonPositionRole.learn);
+
+final LessonDefinition keySquaresLesson03 = LessonDefinition(
+  id: keySquaresLesson03Id,
+  title: 'Choose the Right Key Square',
+  fen: _lesson03Learn.fen,
+  concept: LessonConcept.keySquares,
+  objective:
+      'Learn how to choose between several key squares by aiming for the one hardest for the enemy king to defend.',
+  learnText:
+      'For the white pawn on b4, the key squares are a6, b6, and c6. '
+      'All three are theoretically important, but they are not equally easy to reach. '
+      'Because the black king starts on f8, White should head toward a6, the key square farthest from the defender. '
+      'Dvoretsky uses this position to teach route selection: choose the key square the enemy king will have the greatest difficulty reaching in time.',
+  userSide: ChessSide.white,
+  initialKeySquares: <String>{'a6', 'b6', 'c6'},
+  theoreticalResult: _lesson03Learn.theoreticalResult,
+  comparisonOutcomes: keySquaresLesson03Positions
+      .where((position) => position.role != LessonPositionRole.learn)
+      .map(
+        (position) => LessonPositionOutcome(
+          fen: position.fen,
+          result: position.theoreticalResult,
+          teachingPoint: position.teachingPoint,
+        ),
+      )
+      .toList(growable: false),
+  difficulty: 1,
+);

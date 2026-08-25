@@ -50,18 +50,27 @@ final List<LessonPositionDefinition> keySquaresLesson02Positions =
         id: 'pawn-key-squares-02b',
         lessonId: keySquaresLesson02Id,
         role: LessonPositionRole.practice,
-        fen: '1k6/8/1K6/1P6/8/8/8/8 w - - 0 1',
+        fen: '8/k7/2K5/1P6/8/8/8/8 w - - 0 1',
         theoreticalResult: TheoreticalResult.win,
         teachingPoint:
-            'Recognize that reaching a key square establishes the theoretical win, but accurate conversion is still required.',
+            'After the inaccurate route Kc6 and Black\'s reply Ka7, White must return toward the original winning setup instead of forcing the pawn.',
       ),
       LessonPositionDefinition(
         id: 'pawn-key-squares-02c',
+        lessonId: keySquaresLesson02Id,
+        role: LessonPositionRole.practice,
+        fen: 'k7/2K5/8/1P6/8/8/8/8 w - - 0 1',
+        theoreticalResult: TheoreticalResult.win,
+        teachingPoint:
+            'This exact Diagram 1-2 variation tests the natural error of pushing the pawn too soon: White must preserve the winning king route and avoid stalemate.',
+      ),
+      LessonPositionDefinition(
+        id: 'pawn-key-squares-02d',
         lessonId: keySquaresLesson02Id,
         role: LessonPositionRole.prove,
         fen: '1k6/8/1K6/1P6/8/8/8/8 w - - 0 1',
         theoreticalResult: TheoreticalResult.win,
         teachingPoint:
-            'Convert the exact Diagram 1-2 position without relying on an invented equivalent position.',
+            'Play out the exact Diagram 1-2 position and convert the theoretical win while respecting the king route and stalemate resources shown by Dvoretsky.',
       ),
     ]);

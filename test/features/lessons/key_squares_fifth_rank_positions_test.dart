@@ -7,30 +7,34 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('Key Squares Lesson 2 position pack', () {
-    test('uses the exact Diagram 1-2 position for Learn, Practice and Prove', () {
-      expect(keySquaresLesson02Positions.length, 3);
-
-      for (final position in keySquaresLesson02Positions) {
-        expect(position.fen, '1k6/8/1K6/1P6/8/8/8/8 w - - 0 1');
-      }
+    test('uses Diagram 1-2 and only positions from its published variations', () {
+      expect(keySquaresLesson02Positions.length, 4);
 
       expect(
         keySquaresLesson02Positions
             .where((position) => position.role == LessonPositionRole.learn)
-            .length,
-        1,
+            .single
+            .fen,
+        '1k6/8/1K6/1P6/8/8/8/8 w - - 0 1',
       );
+
       expect(
         keySquaresLesson02Positions
             .where((position) => position.role == LessonPositionRole.practice)
-            .length,
-        1,
+            .map((position) => position.fen)
+            .toList(),
+        <String>[
+          '8/k7/2K5/1P6/8/8/8/8 w - - 0 1',
+          'k7/2K5/8/1P6/8/8/8/8 w - - 0 1',
+        ],
       );
+
       expect(
         keySquaresLesson02Positions
             .where((position) => position.role == LessonPositionRole.prove)
-            .length,
-        1,
+            .single
+            .fen,
+        '1k6/8/1K6/1P6/8/8/8/8 w - - 0 1',
       );
     });
 
@@ -58,6 +62,15 @@ void main() {
           'c7',
         });
       }
+    });
+
+    test('practice positions preserve the two critical Diagram 1-2 lessons', () {
+      final practice = keySquaresLesson02Positions
+          .where((position) => position.role == LessonPositionRole.practice)
+          .toList();
+
+      expect(practice[0].teachingPoint, contains('inaccurate route Kc6'));
+      expect(practice[1].teachingPoint, contains('avoid stalemate'));
     });
   });
 }

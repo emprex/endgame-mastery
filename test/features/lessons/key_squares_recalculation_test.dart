@@ -26,8 +26,8 @@ void main() {
       expect(rule.forWhitePawn('g3'), <String>{'f5', 'g5', 'h5'});
     });
 
-    test('uses only the book position and positions from the published line', () {
-      expect(keySquaresLesson04Positions.length, 4);
+    test('uses the exact book start before the published line checkpoints', () {
+      expect(keySquaresLesson04Positions.length, 5);
 
       final learn = keySquaresLesson04Positions.singleWhere(
         (position) => position.role == LessonPositionRole.learn,
@@ -40,22 +40,24 @@ void main() {
       );
 
       expect(learn.fen, '2k5/8/8/7p/8/8/6P1/5K2 w - - 0 1');
-      expect(practice.length, 2);
-      expect(practice[0].fen, '2k5/8/8/8/7p/8/5KP1/8 w - - 0 2');
-      expect(practice[1].fen, '2k5/8/8/8/8/7p/6P1/6K1 w - - 0 3');
+      expect(practice.length, 3);
+      expect(practice[0].fen, learn.fen);
+      expect(practice[1].fen, '2k5/8/8/8/7p/8/5KP1/8 w - - 0 2');
+      expect(practice[2].fen, '2k5/8/8/8/8/7p/6P1/6K1 w - - 0 3');
       expect(prove.fen, learn.fen);
     });
 
-    test('resolver exposes both published practice checkpoints', () {
+    test('resolver exposes all three Diagram 1-4 practice positions', () {
       final practice = resolver.practicePositionsFor(keySquaresLesson04);
 
-      expect(practice.length, 2);
+      expect(practice.length, 3);
+      expect(practice.first.fen, keySquaresLesson04.fen);
       expect(
         resolver.positionForStage(
           lesson: keySquaresLesson04,
           stage: LessonStage.practice,
         ).fen,
-        practice.first.fen,
+        keySquaresLesson04.fen,
       );
       expect(
         resolver.positionForStage(
@@ -66,7 +68,10 @@ void main() {
       );
     });
 
-    test('teaches recalculation rather than a fixed key-square map', () {
+    test('teaches the exact Kf2, Kg1, g3 recalculation sequence', () {
+      expect(keySquaresLesson04.learnText, contains('1.Kf2!'));
+      expect(keySquaresLesson04.learnText, contains('2.Kg1!!'));
+      expect(keySquaresLesson04.learnText, contains('3.g3!'));
       expect(keySquaresLesson04.learnText.toLowerCase(), contains('recalculate'));
       expect(keySquaresLesson04.learnText, contains('f5, g5, and h5'));
       expect(keySquaresLesson04Hints.concept, contains('current pawn structure'));

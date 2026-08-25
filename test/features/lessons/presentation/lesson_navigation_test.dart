@@ -9,13 +9,17 @@ void main() {
   ) async {
     await tester.pumpWidget(const EndgameMasteryApp());
 
-    await tester.pumpAndSettle();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
 
     final lessonCard = find.byKey(
       ValueKey<String>('lesson-card-${keySquaresLesson01.id}'),
     );
 
     expect(lessonCard, findsOneWidget);
+
+    await tester.ensureVisible(lessonCard);
+    await tester.pump();
 
     await tester.tap(lessonCard);
     await tester.pumpAndSettle();
@@ -30,10 +34,11 @@ void main() {
       findsOneWidget,
     );
 
-    await tester.tap(
-      find.byKey(const ValueKey<String>('lesson-back-to-library')),
+    final backButton = find.byKey(
+      const ValueKey<String>('lesson-back-to-library'),
     );
 
+    await tester.tap(backButton);
     await tester.pumpAndSettle();
 
     expect(find.text('Pawn Endgames'), findsOneWidget);

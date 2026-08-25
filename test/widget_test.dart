@@ -1,5 +1,6 @@
 import 'package:endgame_mastery/app/endgame_mastery_app.dart';
 import 'package:endgame_mastery/core/chess/chess_controller.dart';
+import 'package:endgame_mastery/features/lessons/data/curriculum.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -11,11 +12,7 @@ void main() {
 
   const insufficientMaterialFen = '8/8/8/8/8/2k5/8/2K5 w - - 0 1';
 
-  // ---------------------------------------------------------------------------
-  // APP / NAVIGATION
-  // ---------------------------------------------------------------------------
-
-  testWidgets('Endgame Mastery opens the lesson library', (
+  testWidgets('Endgame Mastery opens the curriculum home', (
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(const EndgameMasteryApp());
@@ -24,17 +21,15 @@ void main() {
 
     expect(find.text('Endgame Mastery'), findsOneWidget);
 
-    expect(find.text('Pawn Endgames'), findsOneWidget);
-
     expect(
-      find.text('Learn the essential ideas one position at a time.'),
+      find.text('${curriculum.length} verified lessons available'),
       findsOneWidget,
     );
-  });
 
-  // ---------------------------------------------------------------------------
-  // DEFAULT DVORETSKY POSITION
-  // ---------------------------------------------------------------------------
+    expect(find.text('CONTINUE LEARNING'), findsOneWidget);
+
+    expect(find.text('Pawn Endgames'), findsOneWidget);
+  });
 
   test('Dvoretsky position loads correctly', () {
     final controller = ChessController();
@@ -47,10 +42,6 @@ void main() {
 
     expect(controller.isWhiteToMove(), isTrue);
   });
-
-  // ---------------------------------------------------------------------------
-  // PROMOTION
-  // ---------------------------------------------------------------------------
 
   test('e7-e8 requires explicit promotion', () {
     final controller = ChessController(fen: promotionFen);
@@ -93,10 +84,6 @@ void main() {
 
     expect(controller.pieceVisualAt('e8')?.type, BoardPieceType.queen);
   });
-
-  // ---------------------------------------------------------------------------
-  // GAME END STATES
-  // ---------------------------------------------------------------------------
 
   test('checkmate is detected', () {
     final controller = ChessController(fen: checkmateFen);

@@ -26,10 +26,18 @@ import 'package:endgame_mastery/features/lessons/session/lesson_stage.dart';
 import 'package:flutter/material.dart';
 
 class LessonExperienceScreen extends StatefulWidget {
-  const LessonExperienceScreen({super.key, this.board, this.initialLesson});
+  const LessonExperienceScreen({
+    super.key,
+    this.board,
+    this.initialLesson,
+    this.onLessonCompleted,
+    this.onLessonChanged,
+  });
 
   final Widget? board;
   final LessonDefinition? initialLesson;
+  final ValueChanged<LessonDefinition>? onLessonCompleted;
+  final ValueChanged<LessonDefinition>? onLessonChanged;
 
   @override
   State<LessonExperienceScreen> createState() => _LessonExperienceScreenState();
@@ -149,6 +157,7 @@ class _LessonExperienceScreenState extends State<LessonExperienceScreen> {
     _trace('LOAD fen=$_currentFen');
 
     if (rebuild) {
+      widget.onLessonChanged?.call(lesson);
       setState(() {});
     }
   }
@@ -200,7 +209,6 @@ class _LessonExperienceScreenState extends State<LessonExperienceScreen> {
       final nextFen = positions[_practicePositionIndex].fen;
 
       _hintController.reset();
-
       _moveExplanationController.reset(nextFen);
 
       _trace('NEXT_PRACTICE index=$_practicePositionIndex fen=$nextFen');
@@ -254,12 +262,14 @@ class _LessonExperienceScreenState extends State<LessonExperienceScreen> {
     if (move.promotion != null &&
         _sessionController.state.stage == LessonStage.prove) {
       final fields = _currentFen.trim().split(RegExp(r'\s+'));
+
       _pendingPromotionMover = fields.length > 1 && fields[1] == 'b'
           ? ChessSide.black
           : ChessSide.white;
 
       _trace(
-        'PROMOTION_PENDING move=${move.uci} mover=${_pendingPromotionMover!.name}',
+        'PROMOTION_PENDING move=${move.uci} '
+        'mover=${_pendingPromotionMover!.name}',
       );
     }
 
@@ -294,6 +304,8 @@ class _LessonExperienceScreenState extends State<LessonExperienceScreen> {
 
   void _completeLesson() {
     _sessionController.completeLesson();
+    widget.onLessonCompleted?.call(_currentLesson);
+
     _trace('COMPLETE_LESSON');
 
     setState(() {
@@ -330,6 +342,7 @@ class _LessonExperienceScreenState extends State<LessonExperienceScreen> {
 
       _pendingPromotionMover = null;
       _sessionController.completeProof(outcome);
+
       _trace('PROMOTION_COMPLETE outcome=${outcome.name} fen=$fen');
 
       setState(() {
@@ -337,6 +350,7 @@ class _LessonExperienceScreenState extends State<LessonExperienceScreen> {
         _mobilePanelExpanded = true;
         _boardRevision++;
       });
+
       return;
     }
 
@@ -358,6 +372,7 @@ class _LessonExperienceScreenState extends State<LessonExperienceScreen> {
 
     _pendingPromotionMover = null;
     _sessionController.completeProof(outcome);
+
     _trace('GAME_ENDED result=${result.name} outcome=${outcome.name}');
 
     setState(() {
@@ -397,7 +412,6 @@ class _LessonExperienceScreenState extends State<LessonExperienceScreen> {
         presentation.showLearnContent || showHintKeySquares;
 
     final explanation = _moveExplanationController.latestExplanation;
-
     final assessment = _moveExplanationController.latestAssessment;
 
     final board = IgnorePointer(
@@ -421,13 +435,9 @@ class _LessonExperienceScreenState extends State<LessonExperienceScreen> {
     );
 
     final showLearnPanel = presentation.showLearnContent;
-
     final showPracticePanel = experience.stage == LessonStage.practice;
-
     final showProvePanel = experience.stage == LessonStage.prove;
-
     final showResultPanel = experience.stage == LessonStage.result;
-
     final showCompletedPanel = experience.stage == LessonStage.completed;
 
     Widget? sidePanel;

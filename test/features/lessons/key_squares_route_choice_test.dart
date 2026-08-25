@@ -17,12 +17,11 @@ void main() {
     const resolver = LessonPositionResolver();
     const builder = TeachingStateBuilder();
     const assessmentRule = KeySquaresMoveAssessmentRule();
+    const diagramFen = '5k2/8/8/8/1P6/8/8/3K4 w - - 0 1';
+    const routeCheckpointFen = '8/8/3k4/8/1P6/1K6/8/8 w - - 0 1';
 
     test('preserves the exact book position and key squares', () {
-      expect(
-        keySquaresLesson03.fen,
-        '5k2/8/8/8/1P6/8/8/3K4 w - - 0 1',
-      );
+      expect(keySquaresLesson03.fen, diagramFen);
       expect(keySquaresLesson03.sideToMove, ChessSide.white);
       expect(keySquaresLesson03.theoreticalResult, TheoreticalResult.win);
       expect(keySquaresLesson03.initialKeySquares, <String>{'a6', 'b6', 'c6'});
@@ -35,43 +34,55 @@ void main() {
       expect(keySquaresLesson03Hints.visual, contains('a6, b6, and c6'));
     });
 
-    test('uses only the book position and a position from its published line', () {
-      expect(keySquaresLesson03Positions.length, 3);
+    test('starts practice from the exact diagram before the published checkpoint', () {
+      expect(keySquaresLesson03Positions.length, 4);
 
       final learn = keySquaresLesson03Positions.singleWhere(
         (position) => position.role == LessonPositionRole.learn,
       );
-      final practice = keySquaresLesson03Positions.singleWhere(
-        (position) => position.role == LessonPositionRole.practice,
-      );
+      final practice = keySquaresLesson03Positions
+          .where((position) => position.role == LessonPositionRole.practice)
+          .toList(growable: false);
       final prove = keySquaresLesson03Positions.singleWhere(
         (position) => position.role == LessonPositionRole.prove,
       );
 
-      expect(learn.fen, '5k2/8/8/8/1P6/8/8/3K4 w - - 0 1');
-      expect(practice.fen, '8/8/3k4/8/1P6/1K6/8/8 w - - 0 1');
-      expect(prove.fen, learn.fen);
+      expect(learn.fen, diagramFen);
+      expect(practice.length, 2);
+      expect(practice[0].fen, diagramFen);
+      expect(practice[1].fen, routeCheckpointFen);
+      expect(prove.fen, diagramFen);
+
+      for (final position in practice) {
+        expect(position.sideToMove, ChessSide.white);
+        expect(position.theoreticalResult, TheoreticalResult.win);
+      }
     });
 
-    test('resolver exposes the exact Lesson 3 practice and prove positions', () {
+    test('resolver exposes Diagram 1-3 as the first practice and exact prove position', () {
+      final practice = resolver.practicePositionsFor(keySquaresLesson03);
+
+      expect(practice.length, 2);
+      expect(practice[0].fen, diagramFen);
+      expect(practice[1].fen, routeCheckpointFen);
       expect(
         resolver.positionForStage(
           lesson: keySquaresLesson03,
           stage: LessonStage.practice,
         ).fen,
-        '8/8/3k4/8/1P6/1K6/8/8 w - - 0 1',
+        diagramFen,
       );
       expect(
         resolver.positionForStage(
           lesson: keySquaresLesson03,
           stage: LessonStage.prove,
         ).fen,
-        '5k2/8/8/8/1P6/8/8/3K4 w - - 0 1',
+        diagramFen,
       );
     });
 
     test('coaching reinforces the published route toward a6', () {
-      const beforeFen = '8/8/3k4/8/1P6/1K6/8/8 w - - 0 1';
+      const beforeFen = routeCheckpointFen;
       const afterFen = '8/8/3k4/8/KP6/8/8/8 b - - 1 1';
 
       final assessment = assessmentRule.assess(
@@ -87,7 +98,7 @@ void main() {
     });
 
     test('coaching flags only the published Kc4 defensive resource', () {
-      const beforeFen = '8/8/3k4/8/1P6/1K6/8/8 w - - 0 1';
+      const beforeFen = routeCheckpointFen;
       const afterFen = '8/8/3k4/8/1PK5/8/8/8 b - - 1 1';
 
       final assessment = assessmentRule.assess(

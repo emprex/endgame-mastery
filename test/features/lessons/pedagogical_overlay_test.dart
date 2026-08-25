@@ -32,7 +32,7 @@ void main() {
   group('PedagogicalOverlayEngine - corrected opening lessons', () {
     const engine = PedagogicalOverlayEngine();
 
-    test('first position highlights six fifth-rank key squares', () {
+    test('first position highlights the three key squares', () {
       final overlay = engine.build(
         lesson: keySquaresLesson01,
         fen: keySquaresLesson01.fen,
@@ -43,17 +43,21 @@ void main() {
           .map((overlay) => overlay.square)
           .toSet();
 
-      expect(keySquares, <String>{
-        'c6', 'd6', 'e6', 'c7', 'd7', 'e7',
-      });
+      expect(keySquares, <String>{'c6', 'd6', 'e6'});
     });
 
-    test('second position produces no unsupported key-square overlay', () {
+    test('second position highlights the six fifth-rank key squares', () {
       final overlay = engine.build(
         lesson: keySquaresLesson02,
         fen: keySquaresLesson02.fen,
       );
-      expect(overlay.isEmpty, isTrue);
+
+      final keySquares = overlay.squares
+          .where((overlay) => overlay.role == SquareOverlayRole.keySquare)
+          .map((overlay) => overlay.square)
+          .toSet();
+
+      expect(keySquares, <String>{'a6', 'b6', 'c6', 'a7', 'b7', 'c7'});
     });
 
     test('unsupported later pawn rank produces no invented overlay', () {

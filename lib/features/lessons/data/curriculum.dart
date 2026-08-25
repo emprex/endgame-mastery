@@ -10,5 +10,6 @@ final List<LessonDefinition> curriculum = List<LessonDefinition>.unmodifiable(
     keySquaresLesson01,
     keySquaresLesson02,
     keySquaresLesson03,
+    keySquaresLesson04,
   ],
 );

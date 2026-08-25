@@ -9,6 +9,13 @@ void main() {
     );
   }
 
+  String currentHintText(WidgetTester tester) {
+    final hint = tester.widget<Text>(
+      find.byKey(const ValueKey<String>('lesson-current-hint')),
+    );
+    return hint.data ?? '';
+  }
+
   testWidgets('Practice reveals three hints progressively', (tester) async {
     tester.view.physicalSize = const Size(1280, 900);
     tester.view.devicePixelRatio = 1;
@@ -31,39 +38,21 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Hint 1 of 3'), findsOneWidget);
-    expect(
-      find.descendant(
-        of: find.byKey(const ValueKey<String>('lesson-current-hint')),
-        matching: find.textContaining('key square'),
-      ),
-      findsOneWidget,
-    );
+    expect(currentHintText(tester), contains('key square'));
 
     await tester.tap(find.text('Show visual hint'));
     await tester.pumpAndSettle();
 
     expect(find.text('Hint 1 of 3'), findsNothing);
     expect(find.text('Hint 2 of 3'), findsOneWidget);
-    expect(
-      find.descendant(
-        of: find.byKey(const ValueKey<String>('lesson-current-hint')),
-        matching: find.textContaining('c6, d6, and e6'),
-      ),
-      findsOneWidget,
-    );
+    expect(currentHintText(tester), contains('c6, d6, and e6'));
 
     await tester.tap(find.text('Show targeted hint'));
     await tester.pumpAndSettle();
 
     expect(find.text('Hint 2 of 3'), findsNothing);
     expect(find.text('Hint 3 of 3'), findsOneWidget);
-    expect(
-      find.descendant(
-        of: find.byKey(const ValueKey<String>('lesson-current-hint')),
-        matching: find.textContaining('theoretical draw'),
-      ),
-      findsOneWidget,
-    );
+    expect(currentHintText(tester), contains('theoretical draw'));
 
     expect(
       find.byKey(const ValueKey<String>('lesson-hint-button')),

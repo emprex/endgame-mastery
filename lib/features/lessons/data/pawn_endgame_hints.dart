@@ -19,12 +19,12 @@ final LessonHints keySquaresLesson01Hints = LessonHints(
 
 final LessonHints keySquaresLesson02Hints = LessonHints(
   concept:
-      'A non-rook pawn on the fifth rank has a larger key-square zone than a '
-      'pawn farther back.',
+      'A non-rook pawn on the fifth rank has six key squares. Reaching one '
+      'establishes the theoretical win, but the conversion still has to be played accurately.',
   visual:
-      'Look at the two rows of key squares ahead of the pawn: '
-      'c6, d6, e6, c7, d7, and e7.',
+      'For the pawn on b5, look at a6, b6, c6, a7, b7, and c7. '
+      'Notice that the white king is already standing on b6, inside the key-square zone.',
   targeted:
-      'Guide the white king toward one of the six highlighted key squares. '
-      'Use the larger target zone created by the pawn on d5.',
+      'Do not search for a key square from scratch: White already occupies one. '
+      'Now look for the king route that keeps control while avoiding defensive resources.',
 );

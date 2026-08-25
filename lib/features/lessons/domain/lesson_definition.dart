@@ -2,7 +2,7 @@
 enum ChessSide { white, black }
 
 /// High-level pedagogical concept taught by a lesson.
-enum LessonConcept { keySquares }
+enum LessonConcept { keySquares, practicalAwareness }
 
 /// The theoretical result from the learner's point of view.
 ///

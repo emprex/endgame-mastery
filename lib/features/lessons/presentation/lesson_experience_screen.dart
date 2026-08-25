@@ -81,6 +81,10 @@ class _LessonExperienceScreenState extends State<LessonExperienceScreen> {
       return keySquaresLesson02Hints;
     }
 
+    if (lesson.id == keySquaresLesson03.id) {
+      return keySquaresLesson03Hints;
+    }
+
     throw StateError('No hints configured for lesson ${lesson.id}.');
   }
 

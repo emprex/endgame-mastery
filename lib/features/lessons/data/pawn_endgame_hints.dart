@@ -28,3 +28,14 @@ final LessonHints keySquaresLesson02Hints = LessonHints(
       'Do not search for a key square from scratch: White already occupies one. '
       'Now look for the king route that keeps control while avoiding defensive resources.',
 );
+
+final LessonHints keySquaresLesson03Hints = LessonHints(
+  concept:
+      'When several key squares are available, compare them with the defending king. '
+      'The best target is often the one the defender has the greatest difficulty reaching.',
+  visual:
+      'The key squares for the pawn on b4 are a6, b6, and c6. '
+      'Compare their distance from the black king on f8.',
+  targeted:
+      'Do not head toward the defender. Build your king route toward the queenside key square that is farthest from Black.',
+);

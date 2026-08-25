@@ -229,6 +229,26 @@ class _LessonExperienceScreenState extends State<LessonExperienceScreen> {
   void _onBoardMovePlayed(PlayedMove move) {
     _moveExplanationController.onMovePlayed(move);
 
+    if (move.promotion != null &&
+        _sessionController.state.stage == LessonStage.prove) {
+      final fields = _currentFen.trim().split(RegExp(r'\s+'));
+      final moverSide = fields.length > 1 && fields[1] == 'b'
+          ? ChessSide.black
+          : ChessSide.white;
+
+      final outcome = moverSide == _currentLesson.userSide
+          ? LessonSessionOutcome.win
+          : LessonSessionOutcome.loss;
+
+      _sessionController.completeProof(outcome);
+
+      setState(() {
+        _mobilePanelExpanded = true;
+        _boardRevision++;
+      });
+      return;
+    }
+
     setState(() {});
   }
 
@@ -350,6 +370,8 @@ class _LessonExperienceScreenState extends State<LessonExperienceScreen> {
             key: ValueKey<int>(_boardRevision),
             initialFen: _currentFen,
             engineSide: _engineSideForLesson(_currentLesson),
+            engineEnabled:
+                stage == LessonStage.practice || stage == LessonStage.prove,
             pedagogicalSquares: showPedagogicalSquares
                 ? experience.teaching.keySquares
                 : const <String>{},

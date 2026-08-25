@@ -6,33 +6,37 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   group('TeachingStateBuilder - corrected opening lessons', () {
     const builder = TeachingStateBuilder();
-    const firstFen = '8/3k4/8/3P4/3K4/8/8/8 w - - 0 1';
-    const secondFen = '1k6/8/1P6/1K6/8/8/8/8 w - - 0 1';
 
-    test('first lesson state is a known draw with six key squares', () {
-      final state = builder.build(lesson: keySquaresLesson01, fen: firstFen);
+    test('first lesson state is a known draw with three key squares', () {
+      final state = builder.build(
+        lesson: keySquaresLesson01,
+        fen: keySquaresLesson01.fen,
+      );
 
       expect(state.sideToMove, ChessSide.white);
       expect(state.theoreticalResult, TheoreticalResult.draw);
       expect(state.hasKnownTheoreticalResult, isTrue);
-      expect(state.keySquares, <String>{
-        'c6', 'd6', 'e6', 'c7', 'd7', 'e7',
-      });
+      expect(state.keySquares, <String>{'c6', 'd6', 'e6'});
     });
 
-    test('second lesson state is a known draw without invented overlays', () {
-      final state = builder.build(lesson: keySquaresLesson02, fen: secondFen);
+    test('second lesson state is a known win with six key squares', () {
+      final state = builder.build(
+        lesson: keySquaresLesson02,
+        fen: keySquaresLesson02.fen,
+      );
 
       expect(state.sideToMove, ChessSide.white);
-      expect(state.theoreticalResult, TheoreticalResult.draw);
+      expect(state.theoreticalResult, TheoreticalResult.win);
       expect(state.hasKnownTheoreticalResult, isTrue);
-      expect(state.keySquares, isEmpty);
+      expect(state.keySquares, <String>{
+        'a6', 'b6', 'c6', 'a7', 'b7', 'c7',
+      });
     });
 
     test('unknown first-lesson FEN has no invented theoretical result', () {
       final state = builder.build(
         lesson: keySquaresLesson01,
-        fen: '8/3k4/8/3P4/4K3/8/8/8 w - - 0 1',
+        fen: '8/3k4/8/4K3/3P4/8/8/8 w - - 0 1',
       );
 
       expect(state.theoreticalResult, isNull);

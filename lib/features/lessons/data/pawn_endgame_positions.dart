@@ -54,13 +54,22 @@ final List<LessonPositionDefinition> keySquaresLesson02Positions =
         id: 'pawn-key-squares-02b',
         lessonId: keySquaresLesson02Id,
         role: LessonPositionRole.practice,
+        fen: '1k6/8/1K6/1P6/8/8/8/8 w - - 0 1',
+        theoreticalResult: TheoreticalResult.win,
+        teachingPoint:
+            'Begin practice from the exact Diagram 1-2 position before moving to the published conversion checkpoints.',
+      ),
+      LessonPositionDefinition(
+        id: 'pawn-key-squares-02c',
+        lessonId: keySquaresLesson02Id,
+        role: LessonPositionRole.practice,
         fen: '8/k7/2K5/1P6/8/8/8/8 w - - 0 1',
         theoreticalResult: TheoreticalResult.win,
         teachingPoint:
             'This published continuation tests the less direct Kc6 route after Black reaches a7.',
       ),
       LessonPositionDefinition(
-        id: 'pawn-key-squares-02c',
+        id: 'pawn-key-squares-02d',
         lessonId: keySquaresLesson02Id,
         role: LessonPositionRole.practice,
         fen: 'k7/2K5/8/1P6/8/8/8/8 w - - 0 1',
@@ -69,7 +78,7 @@ final List<LessonPositionDefinition> keySquaresLesson02Positions =
             'This published continuation tests the stalemate resource: advancing b6 immediately would stalemate Black.',
       ),
       LessonPositionDefinition(
-        id: 'pawn-key-squares-02d',
+        id: 'pawn-key-squares-02e',
         lessonId: keySquaresLesson02Id,
         role: LessonPositionRole.prove,
         fen: '1k6/8/1K6/1P6/8/8/8/8 w - - 0 1',

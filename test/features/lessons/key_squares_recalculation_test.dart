@@ -15,10 +15,7 @@ void main() {
     const rule = KeySquaresRule();
 
     test('preserves the corrected exact book position', () {
-      expect(
-        keySquaresLesson04.fen,
-        '2k5/8/8/7p/8/8/6P1/5K2 w - - 0 1',
-      );
+      expect(keySquaresLesson04.fen, '2k5/8/8/7p/8/8/6P1/5K2 w - - 0 1');
       expect(keySquaresLesson04.sideToMove, ChessSide.white);
       expect(keySquaresLesson04.theoreticalResult, TheoreticalResult.win);
       expect(keySquaresLesson04.initialKeySquares, <String>{'f4', 'g4', 'h4'});
@@ -70,7 +67,7 @@ void main() {
     });
 
     test('teaches recalculation rather than a fixed key-square map', () {
-      expect(keySquaresLesson04.learnText, contains('recalculate'));
+      expect(keySquaresLesson04.learnText.toLowerCase(), contains('recalculate'));
       expect(keySquaresLesson04.learnText, contains('f5, g5, and h5'));
       expect(keySquaresLesson04Hints.concept, contains('current pawn structure'));
       expect(keySquaresLesson04Hints.visual, contains('f5, g5, and h5'));

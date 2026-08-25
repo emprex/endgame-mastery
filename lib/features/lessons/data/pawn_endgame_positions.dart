@@ -5,6 +5,8 @@ const String keySquaresLesson01Id = 'pawn-key-squares-01';
 const String keySquaresLesson02Id = 'pawn-key-squares-02';
 const String keySquaresLesson03Id = 'pawn-key-squares-03';
 const String keySquaresLesson04Id = 'pawn-key-squares-04';
+const String pawnTragicomedyLesson05Id = 'pawn-tragicomedy-05';
+const String pawnTragicomedyLesson06Id = 'pawn-tragicomedy-06';
 
 final List<LessonPositionDefinition> keySquaresLesson01Positions =
     List<LessonPositionDefinition>.unmodifiable(<LessonPositionDefinition>[
@@ -146,4 +148,32 @@ final List<LessonPositionDefinition> keySquaresLesson04Positions =
         teachingPoint:
             'Play out the exact Diagram 1-4 position and convert by recalculating key squares when the pawn structure changes.',
       ),
+    ]);
+
+final List<LessonPositionDefinition> pawnTragicomedyLesson05Positions =
+    List<LessonPositionDefinition>.unmodifiable(<LessonPositionDefinition>[
+      for (final role in LessonPositionRole.values)
+        LessonPositionDefinition(
+          id: 'pawn-tragicomedy-05-${role.name}',
+          lessonId: pawnTragicomedyLesson05Id,
+          role: role,
+          fen: '8/8/3p4/3P4/5k2/3K4/8/8 w - - 0 1',
+          theoreticalResult: TheoreticalResult.draw,
+          teachingPoint:
+              'Dvoretsky Diagram 1-5 is a practical warning: do not resign merely because a pawn must be lost. Reassess the resulting pawn ending first.',
+        ),
+    ]);
+
+final List<LessonPositionDefinition> pawnTragicomedyLesson06Positions =
+    List<LessonPositionDefinition>.unmodifiable(<LessonPositionDefinition>[
+      for (final role in LessonPositionRole.values)
+        LessonPositionDefinition(
+          id: 'pawn-tragicomedy-06-${role.name}',
+          lessonId: pawnTragicomedyLesson06Id,
+          role: role,
+          fen: '8/8/5pk1/5r2/R7/5K2/8/8 w - - 0 1',
+          theoreticalResult: TheoreticalResult.draw,
+          teachingPoint:
+              'Dvoretsky Diagram 1-6 is the final practical warning before Corresponding Squares: 1.Rf4?? allows ...Kg5! and White resigned.',
+        ),
     ]);

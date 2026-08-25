@@ -10,9 +10,7 @@ void main() {
 
     test('current curriculum is valid', () {
       final result = validator.validate(curriculum);
-
       expect(result.isValid, isTrue);
-
       expect(result.issues, isEmpty);
     });
 
@@ -20,7 +18,7 @@ void main() {
       final duplicateLesson = LessonDefinition(
         id: keySquaresLesson01.id,
         title: 'Duplicate',
-        fen: '8/3k4/8/3K4/3P4/8/8/8 w - - 0 1',
+        fen: '8/3k4/8/3P4/3K4/8/8/8 w - - 0 1',
         concept: LessonConcept.keySquares,
         objective: 'Duplicate test.',
         learnText: 'Duplicate test lesson.',
@@ -36,18 +34,14 @@ void main() {
       ]);
 
       expect(result.isValid, isFalse);
-
-      expect(
-        result.issues.any((issue) => issue.message.contains('unique')),
-        isTrue,
-      );
+      expect(result.issues.any((issue) => issue.message.contains('unique')), isTrue);
     });
 
     test('Key Squares lesson requires at least one key square', () {
       final lesson = LessonDefinition(
         id: 'missing-key-squares',
         title: 'Missing Key Squares',
-        fen: '8/3k4/8/3K4/3P4/8/8/8 w - - 0 1',
+        fen: '8/3k4/8/3P4/3K4/8/8/8 w - - 0 1',
         concept: LessonConcept.keySquares,
         objective: 'Validation test.',
         learnText: 'Validation test.',
@@ -58,9 +52,7 @@ void main() {
       );
 
       final result = validator.validate(<LessonDefinition>[lesson]);
-
       expect(result.isValid, isFalse);
-
       expect(
         result.issues.any(
           (issue) => issue.message.contains('must define initial key squares'),
@@ -69,19 +61,18 @@ void main() {
       );
     });
 
-    test('current Key Squares lesson preserves both theoretical outcomes', () {
+    test('first two corrected lesson positions resolve to draws', () {
       expect(
         keySquaresLesson01.theoreticalResultForFen(
-          '8/3k4/8/3K4/3P4/8/8/8 w - - 0 1',
+          '8/3k4/8/3P4/3K4/8/8/8 w - - 0 1',
         ),
         TheoreticalResult.draw,
       );
-
       expect(
-        keySquaresLesson01.theoreticalResultForFen(
-          '8/3k4/8/3K4/3P4/8/8/8 b - - 0 1',
+        keySquaresLesson02.theoreticalResultForFen(
+          '1k6/8/1P6/1K6/8/8/8/8 w - - 0 1',
         ),
-        TheoreticalResult.win,
+        TheoreticalResult.draw,
       );
     });
   });

@@ -4,6 +4,7 @@ import '../domain/lesson_position_definition.dart';
 const String keySquaresLesson01Id = 'pawn-key-squares-01';
 const String keySquaresLesson02Id = 'pawn-key-squares-02';
 const String keySquaresLesson03Id = 'pawn-key-squares-03';
+const String keySquaresLesson04Id = 'pawn-key-squares-04';
 
 final List<LessonPositionDefinition> keySquaresLesson01Positions =
     List<LessonPositionDefinition>.unmodifiable(<LessonPositionDefinition>[
@@ -104,5 +105,45 @@ final List<LessonPositionDefinition> keySquaresLesson03Positions =
         theoreticalResult: TheoreticalResult.win,
         teachingPoint:
             'Play out the exact Diagram 1-3 position and prove that choosing the hardest key square for the enemy king to defend is the winning method.',
+      ),
+    ]);
+
+final List<LessonPositionDefinition> keySquaresLesson04Positions =
+    List<LessonPositionDefinition>.unmodifiable(<LessonPositionDefinition>[
+      LessonPositionDefinition(
+        id: 'pawn-key-squares-04a',
+        lessonId: keySquaresLesson04Id,
+        role: LessonPositionRole.learn,
+        fen: '2k5/8/8/7p/8/8/6P1/5K2 w - - 0 1',
+        theoreticalResult: TheoreticalResult.win,
+        teachingPoint:
+            'In Dvoretsky Diagram 1-4, White must anticipate how pawn moves will change the key-square geometry.',
+      ),
+      LessonPositionDefinition(
+        id: 'pawn-key-squares-04b',
+        lessonId: keySquaresLesson04Id,
+        role: LessonPositionRole.practice,
+        fen: '2k5/8/8/8/7p/8/5KP1/8 w - - 0 2',
+        theoreticalResult: TheoreticalResult.win,
+        teachingPoint:
+            'After Kf2 and ...h4, White must prepare for ...h3. The natural Kf3 route is refuted by that pawn advance.',
+      ),
+      LessonPositionDefinition(
+        id: 'pawn-key-squares-04c',
+        lessonId: keySquaresLesson04Id,
+        role: LessonPositionRole.practice,
+        fen: '2k5/8/8/8/8/7p/6P1/6K1 w - - 0 3',
+        theoreticalResult: TheoreticalResult.win,
+        teachingPoint:
+            'After Kf2 h4, Kg1 h3, White should change the pawn structure with g3 so that the new key squares are closer to the white king.',
+      ),
+      LessonPositionDefinition(
+        id: 'pawn-key-squares-04d',
+        lessonId: keySquaresLesson04Id,
+        role: LessonPositionRole.prove,
+        fen: '2k5/8/8/7p/8/8/6P1/5K2 w - - 0 1',
+        theoreticalResult: TheoreticalResult.win,
+        teachingPoint:
+            'Play out the exact Diagram 1-4 position and convert by recalculating key squares when the pawn structure changes.',
       ),
     ]);

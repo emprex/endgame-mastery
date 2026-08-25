@@ -15,6 +15,7 @@ class BoardScreen extends StatefulWidget {
     this.initialFen,
     this.engineSide = EngineSide.black,
     this.engineEnabled = true,
+    this.engineReplyDelay = const Duration(milliseconds: 1600),
     this.pedagogicalSquares = const <String>{},
     this.onFenChanged,
     this.onGameEnded,
@@ -24,6 +25,13 @@ class BoardScreen extends StatefulWidget {
   final String? initialFen;
   final EngineSide engineSide;
   final bool engineEnabled;
+
+  /// Minimum pause after a user move before Stockfish starts its reply.
+  ///
+  /// This keeps curriculum feedback readable instead of replacing it almost
+  /// immediately with the engine move. Engine-first positions are not delayed.
+  final Duration engineReplyDelay;
+
   final Set<String> pedagogicalSquares;
   final ValueChanged<String>? onFenChanged;
   final ValueChanged<BoardGameResult>? onGameEnded;
@@ -38,6 +46,7 @@ class _BoardScreenState extends State<BoardScreen> {
   late final GameEngineController gameEngineController;
 
   bool engineReady = false;
+  bool waitingBeforeEngineReply = false;
   Object? engineError;
 
   bool whiteBottom = true;
@@ -138,6 +147,7 @@ class _BoardScreenState extends State<BoardScreen> {
   bool get interactionLocked {
     return !widget.engineEnabled ||
         !engineReady ||
+        waitingBeforeEngineReply ||
         gameEngineController.engineBusy ||
         gameEngineController.isEngineTurn ||
         controller.isGameOver();
@@ -251,10 +261,10 @@ class _BoardScreenState extends State<BoardScreen> {
       return;
     }
 
-    await _requestEngineMoveIfNeeded();
+    await _requestEngineMoveIfNeeded(delayForFeedback: true);
   }
 
-  Future<void> _requestEngineMoveIfNeeded() async {
+  Future<void> _requestEngineMoveIfNeeded({bool delayForFeedback = false}) async {
     if (!mounted ||
         !widget.engineEnabled ||
         !engineReady ||
@@ -262,6 +272,29 @@ class _BoardScreenState extends State<BoardScreen> {
         !gameEngineController.isEngineTurn ||
         gameEngineController.engineBusy) {
       return;
+    }
+
+    if (delayForFeedback && widget.engineReplyDelay > Duration.zero) {
+      setState(() {
+        waitingBeforeEngineReply = true;
+      });
+
+      await Future<void>.delayed(widget.engineReplyDelay);
+
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        waitingBeforeEngineReply = false;
+      });
+
+      if (!widget.engineEnabled ||
+          controller.isGameOver() ||
+          !gameEngineController.isEngineTurn ||
+          gameEngineController.engineBusy) {
+        return;
+      }
     }
 
     final engineFuture = gameEngineController.requestEngineMove();
@@ -429,6 +462,7 @@ class _BoardScreenState extends State<BoardScreen> {
       lastFrom = null;
       lastTo = null;
       promotionDialogOpen = false;
+      waitingBeforeEngineReply = false;
       engineError = null;
     });
 
@@ -544,6 +578,8 @@ class _BoardScreenState extends State<BoardScreen> {
       statusText = 'Engine error';
     } else if (!engineReady) {
       statusText = 'Preparing engine…';
+    } else if (waitingBeforeEngineReply) {
+      statusText = 'Review your move…';
     } else if (gameEngineController.engineBusy) {
       statusText = 'Stockfish thinking…';
     } else {
@@ -598,12 +634,14 @@ class _BoardScreenState extends State<BoardScreen> {
                           ? const Color(0xFFE8C76A)
                           : inCheck
                           ? const Color(0xFFFF8A80)
-                          : gameEngineController.engineBusy
+                          : waitingBeforeEngineReply ||
+                                gameEngineController.engineBusy
                           ? const Color(0xFFE8C76A)
                           : Colors.white70,
                       fontWeight:
                           (inCheck ||
                               gameOver ||
+                              waitingBeforeEngineReply ||
                               gameEngineController.engineBusy)
                           ? FontWeight.w700
                           : FontWeight.w500,

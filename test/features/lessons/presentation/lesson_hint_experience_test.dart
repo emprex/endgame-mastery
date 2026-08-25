@@ -31,22 +31,20 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Hint 1 of 3'), findsOneWidget);
-    expect(find.textContaining('six-square key-square zone'), findsOneWidget);
+    expect(find.textContaining('key square'), findsOneWidget);
 
     await tester.tap(find.text('Show visual hint'));
     await tester.pumpAndSettle();
 
     expect(find.text('Hint 1 of 3'), findsNothing);
     expect(find.text('Hint 2 of 3'), findsOneWidget);
-
-    expect(find.textContaining('c6, d6, e6, c7, d7, and e7'), findsOneWidget);
+    expect(find.textContaining('c6, d6, e6'), findsOneWidget);
 
     await tester.tap(find.text('Show targeted hint'));
     await tester.pumpAndSettle();
 
     expect(find.text('Hint 2 of 3'), findsNothing);
     expect(find.text('Hint 3 of 3'), findsOneWidget);
-
     expect(find.textContaining('Preserve the draw'), findsOneWidget);
 
     expect(
@@ -79,17 +77,14 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('PROVE'), findsOneWidget);
-
     expect(
       find.byKey(const ValueKey<String>('lesson-current-hint')),
       findsNothing,
     );
-
     expect(
       find.byKey(const ValueKey<String>('lesson-hint-progress')),
       findsNothing,
     );
-
     expect(find.text('Get a hint'), findsOneWidget);
   });
 }

@@ -150,9 +150,15 @@ final List<LessonPositionDefinition> keySquaresLesson04Positions =
       ),
     ]);
 
+const _tragicomedyRoles = <LessonPositionRole>[
+  LessonPositionRole.learn,
+  LessonPositionRole.practice,
+  LessonPositionRole.prove,
+];
+
 final List<LessonPositionDefinition> pawnTragicomedyLesson05Positions =
     List<LessonPositionDefinition>.unmodifiable(<LessonPositionDefinition>[
-      for (final role in LessonPositionRole.values)
+      for (final role in _tragicomedyRoles)
         LessonPositionDefinition(
           id: 'pawn-tragicomedy-05-${role.name}',
           lessonId: pawnTragicomedyLesson05Id,
@@ -166,7 +172,7 @@ final List<LessonPositionDefinition> pawnTragicomedyLesson05Positions =
 
 final List<LessonPositionDefinition> pawnTragicomedyLesson06Positions =
     List<LessonPositionDefinition>.unmodifiable(<LessonPositionDefinition>[
-      for (final role in LessonPositionRole.values)
+      for (final role in _tragicomedyRoles)
         LessonPositionDefinition(
           id: 'pawn-tragicomedy-06-${role.name}',
           lessonId: pawnTragicomedyLesson06Id,

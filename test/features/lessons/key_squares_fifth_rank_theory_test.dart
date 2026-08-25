@@ -6,60 +6,60 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('Key Squares — fifth rank lesson', () {
-    const fen = '7k/8/8/3P4/3K4/8/8/8 w - - 0 1';
+    const fen = '1k6/8/1K6/1P6/8/8/8/8 w - - 0 1';
 
-    test('preserves the verified lesson position', () {
+    test('preserves Dvoretsky Diagram 1-2', () {
       expect(keySquaresLesson02.fen, fen);
       expect(keySquaresLesson02.sideToMove, ChessSide.white);
       expect(keySquaresLesson02.theoreticalResult, TheoreticalResult.win);
       expect(keySquaresLesson02.difficulty, 1);
     });
 
-    test('defines the six fifth-rank key squares', () {
+    test('defines the six fifth-rank key squares for the b5 pawn', () {
       expect(keySquaresLesson02.initialKeySquares, <String>{
+        'a6',
+        'b6',
         'c6',
-        'd6',
-        'e6',
+        'a7',
+        'b7',
         'c7',
-        'd7',
-        'e7',
       });
     });
 
-    test('reuses KeySquaresRule for the d5 pawn', () {
+    test('reuses KeySquaresRule for the b5 pawn', () {
       const rule = KeySquaresRule();
 
-      expect(rule.forWhitePawn('d5'), <String>{
+      expect(rule.forWhitePawn('b5'), <String>{
+        'a6',
+        'b6',
         'c6',
-        'd6',
-        'e6',
+        'a7',
+        'b7',
         'c7',
-        'd7',
-        'e7',
       });
     });
 
-    test('hints teach the six-square zone without giving a move', () {
+    test('hints recognize that the king already occupies a key square', () {
       expect(
         keySquaresLesson02Hints.visual,
-        contains('c6, d6, e6, c7, d7, and e7'),
+        contains('a6, b6, c6, a7, b7, and c7'),
       );
+      expect(keySquaresLesson02Hints.visual, contains('standing on b6'));
 
       for (final hint in <String>[
         keySquaresLesson02Hints.concept,
         keySquaresLesson02Hints.visual,
         keySquaresLesson02Hints.targeted,
       ]) {
+        expect(hint, isNot(contains('Ka6')));
         expect(hint, isNot(contains('Kc6')));
-        expect(hint, isNot(contains('Kd6')));
-        expect(hint, isNot(contains('Ke6')));
       }
     });
 
     test('unknown positions do not inherit theoretical truth', () {
       expect(
         keySquaresLesson02.theoreticalResultForFen(
-          '7k/8/8/3P4/4K3/8/8/8 w - - 0 1',
+          '1k6/8/2K5/1P6/8/8/8/8 w - - 0 1',
         ),
         isNull,
       );

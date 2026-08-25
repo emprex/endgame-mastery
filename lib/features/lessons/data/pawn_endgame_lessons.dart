@@ -118,3 +118,39 @@ final LessonDefinition keySquaresLesson04 = LessonDefinition(
       .toList(growable: false),
   difficulty: 1,
 );
+
+final LessonDefinition pawnTragicomedyLesson05 = LessonDefinition(
+  id: pawnTragicomedyLesson05Id,
+  title: 'Tragicomedy: Do Not Resign Too Soon',
+  fen: '8/8/3p4/3P4/5k2/3K4/8/8 w - - 0 1',
+  concept: LessonConcept.practicalAwareness,
+  objective:
+      'Learn to evaluate the resulting pawn ending before assuming that losing a pawn means losing the game.',
+  learnText:
+      'Dvoretsky places this Coull–Stanciu position immediately after the Key Squares examples as a practical warning. '
+      'White resigned after seeing that the d5-pawn could not be saved. The lesson is not to stop the calculation there. '
+      'Before resigning, calculate the position that remains after the pawn is lost and evaluate the kings, the remaining pawn, and the side to move. '
+      'Material loss and game loss are not the same conclusion.',
+  userSide: ChessSide.white,
+  initialKeySquares: const <String>{},
+  theoreticalResult: TheoreticalResult.draw,
+  difficulty: 1,
+);
+
+final LessonDefinition pawnTragicomedyLesson06 = LessonDefinition(
+  id: pawnTragicomedyLesson06Id,
+  title: 'Tragicomedy: One Careless Rook Move',
+  fen: '8/8/5pk1/5r2/R7/5K2/8/8 w - - 0 1',
+  concept: LessonConcept.practicalAwareness,
+  objective:
+      'Learn to check the enemy king\'s access before making an automatic rook move in a technical ending.',
+  learnText:
+      'Dvoretsky ends the Tragicomedies with the Spielmann–Duras position. '
+      'White played 1.Rf4?? and after ...Kg5! resigned. '
+      'The warning is practical: before committing the rook, check whether the move opens a decisive route for the enemy king. '
+      'Do not judge a technical position by habit; recalculate the opponent\'s most forcing reply first.',
+  userSide: ChessSide.white,
+  initialKeySquares: const <String>{},
+  theoreticalResult: TheoreticalResult.draw,
+  difficulty: 1,
+);

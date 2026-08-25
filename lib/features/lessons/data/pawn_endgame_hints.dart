@@ -15,11 +15,11 @@ final LessonHints keySquaresLesson01Hints = LessonHints(
 
 final LessonHints keySquaresLesson02Hints = LessonHints(
   concept:
-      'A pawn close to promotion is not automatically winning. When the defending king is directly in front, calculate the king geometry before pushing.',
+      'A fifth-rank pawn has six key squares. If your king already occupies one, the task is conversion rather than finding the key-square zone.',
   visual:
-      'White has king b5 and pawn b6; Black has king b8. Look at the promotion square and every legal king route before advancing the pawn.',
+      'For the pawn on b5, the key squares are a6, b6, c6, a7, b7, and c7. Your king is already standing on b6.',
   targeted:
-      'Your task is to prove the draw from the exact starting position. Do not force the pawn into a stalemate or losing-tempo idea.',
+      'Use the king to make progress before pushing the pawn. Keep stalemate resources in mind when the black king is trapped near a8.',
 );
 
 final LessonHints keySquaresLesson03Hints = LessonHints(

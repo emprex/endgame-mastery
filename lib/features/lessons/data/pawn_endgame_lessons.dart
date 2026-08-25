@@ -86,3 +86,35 @@ final LessonDefinition keySquaresLesson03 = LessonDefinition(
       .toList(growable: false),
   difficulty: 1,
 );
+
+final LessonPositionDefinition _lesson04Learn = keySquaresLesson04Positions
+    .singleWhere((position) => position.role == LessonPositionRole.learn);
+
+final LessonDefinition keySquaresLesson04 = LessonDefinition(
+  id: keySquaresLesson04Id,
+  title: 'Recalculate the Key Squares',
+  fen: _lesson04Learn.fen,
+  concept: LessonConcept.keySquares,
+  objective:
+      'Learn to recalculate key squares when pawn moves change the structure of the endgame.',
+  learnText:
+      'In Diagram 1-4 White must not treat key squares as a fixed map. '
+      'The initial white pawn on g2 has the key squares f4, g4, and h4. '
+      'After Kf2, Black can advance the h-pawn, and White must anticipate how that changes the position. '
+      'The critical idea comes after ...h3: g3 changes the white pawn structure, and the key squares for the pawn on g3 move to f5, g5, and h5, closer to the white king. '
+      'Recalculate the key-square zone whenever a pawn move changes the structure.',
+  userSide: ChessSide.white,
+  initialKeySquares: <String>{'f4', 'g4', 'h4'},
+  theoreticalResult: _lesson04Learn.theoreticalResult,
+  comparisonOutcomes: keySquaresLesson04Positions
+      .where((position) => position.role != LessonPositionRole.learn)
+      .map(
+        (position) => LessonPositionOutcome(
+          fen: position.fen,
+          result: position.theoreticalResult,
+          teachingPoint: position.teachingPoint,
+        ),
+      )
+      .toList(growable: false),
+  difficulty: 1,
+);

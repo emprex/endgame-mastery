@@ -56,17 +56,18 @@ final LessonPositionDefinition _lesson02Learn = keySquaresLesson02Positions
 
 final LessonDefinition keySquaresLesson02 = LessonDefinition(
   id: keySquaresLesson02Id,
-  title: 'Do Not Force the Pawn',
+  title: 'The Fifth Rank',
   fen: _lesson02Learn.fen,
-  concept: LessonConcept.practicalAwareness,
+  concept: LessonConcept.keySquares,
   objective:
-      'Play the exact b6-pawn position without assuming that an advanced pawn can be forced through.',
+      'Convert the exact fifth-rank pawn position by using the king correctly and avoiding stalemate.',
   learnText:
-      'White has king b5 and pawn b6 against the black king on b8, with White to move. '
-      'This position is a drawing task. The pawn is close to promotion, but the defending king is ideally placed in front of it. '
-      'Do not invent a winning plan from the pawn\'s rank alone. Play the position to its genuine chess conclusion and prove the draw.',
+      'White has king b6 and pawn b5 against the black king on b8, with White to move. '
+      'For a white pawn on the fifth rank, the key-square zone contains six squares: a6, b6, c6, a7, b7, and c7. '
+      'The white king already stands on b6, one of those key squares, so the position is winning. '
+      'The important practical lesson is conversion: use the king to make progress and do not rush the pawn into a stalemate resource.',
   userSide: ChessSide.white,
-  initialKeySquares: const <String>{},
+  initialKeySquares: <String>{'a6', 'b6', 'c6', 'a7', 'b7', 'c7'},
   theoreticalResult: _lesson02Learn.theoreticalResult,
   comparisonOutcomes: _comparisonOutcomesFrom(
     keySquaresLesson02Positions,

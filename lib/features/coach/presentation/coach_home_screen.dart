@@ -73,8 +73,9 @@ class _CoachHomeScreenState extends State<CoachHomeScreen> {
         );
       }
 
+      final positionEngine = engine as PositionAnalysisEngine;
       await engine.initialize();
-      final result = await CoachEngineAnalyzer(engine: engine).analyze(
+      final result = await CoachEngineAnalyzer(engine: positionEngine).analyze(
         plan.reconstructedMoves,
       );
 

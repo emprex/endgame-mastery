@@ -42,7 +42,12 @@ void main() {
       pgn,
     );
 
-    await tester.tap(find.byKey(const ValueKey<String>('coach-analyze-button')));
+    final analyzeButton = find.byKey(
+      const ValueKey<String>('coach-analyze-button'),
+    );
+
+    await tester.ensureVisible(analyzeButton);
+    await tester.tap(analyzeButton);
     await tester.pumpAndSettle();
 
     expect(find.text('Game imported'), findsOneWidget);

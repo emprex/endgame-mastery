@@ -4,13 +4,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  testWidgets('user can open a lesson and return to the lesson library', (
+  testWidgets('user can open Training, open a lesson and return to the library', (
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(const EndgameMasteryApp());
+    await tester.pumpAndSettle();
 
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 50));
+    await tester.tap(find.text('Training'));
+    await tester.pumpAndSettle();
 
     final lessonCard = find.byKey(
       ValueKey<String>('lesson-card-${keySquaresLesson01.id}'),

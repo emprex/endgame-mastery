@@ -1,3 +1,4 @@
+import 'package:endgame_mastery/features/coach/data/game_reconstructor.dart';
 import 'package:endgame_mastery/features/coach/data/pgn_game_parser.dart';
 import 'package:endgame_mastery/features/coach/domain/coach_analysis_plan.dart';
 import 'package:endgame_mastery/features/lessons/presentation/lessons_screen.dart';
@@ -13,6 +14,7 @@ class CoachHomeScreen extends StatefulWidget {
 class _CoachHomeScreenState extends State<CoachHomeScreen> {
   final TextEditingController _pgnController = TextEditingController();
   final PgnGameParser _parser = const PgnGameParser();
+  final GameReconstructor _reconstructor = const GameReconstructor();
   final CoachAnalysisPlanner _planner = const CoachAnalysisPlanner();
 
   CoachAnalysisPlan? _analysisPlan;
@@ -29,8 +31,12 @@ class _CoachHomeScreenState extends State<CoachHomeScreen> {
 
     try {
       final game = _parser.parse(_pgnController.text);
+      final reconstructedMoves = _reconstructor.reconstruct(game);
       setState(() {
-        _analysisPlan = _planner.build(game);
+        _analysisPlan = _planner.build(
+          game: game,
+          reconstructedMoves: reconstructedMoves,
+        );
         _error = null;
       });
     } on FormatException catch (error) {
@@ -144,7 +150,7 @@ class _CoachHomeScreenState extends State<CoachHomeScreen> {
                           const SizedBox(width: 12),
                           Expanded(
                             child: Text(
-                              'PGN ingestion and the pedagogical analysis contract are active. The next engine layer will score each reconstructed position and populate the critical moments without inventing chess conclusions.',
+                              'The full game has been legally reconstructed position by position. The next engine layer will score those positions and populate the critical moments without inventing chess conclusions.',
                               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                                     color: Colors.white70,
                                     height: 1.4,
@@ -187,7 +193,7 @@ class _GameImportedCard extends StatelessWidget {
                 const Icon(Icons.check_circle_outline),
                 const SizedBox(width: 10),
                 Text(
-                  'Game imported',
+                  'Game imported and validated',
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.w700,
                       ),
@@ -198,7 +204,7 @@ class _GameImportedCard extends StatelessWidget {
             Text('${game.white}$whiteRating  vs  ${game.black}$blackRating'),
             const SizedBox(height: 6),
             Text(
-              '${game.result} · ${game.fullMoveCount} moves · ${game.plyCount} plies',
+              '${game.result} · ${game.fullMoveCount} moves · ${plan.reconstructedMoves.length} positions reconstructed',
               style: const TextStyle(color: Colors.white70),
             ),
             const SizedBox(height: 14),

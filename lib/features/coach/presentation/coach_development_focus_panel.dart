@@ -1,7 +1,6 @@
 import 'package:endgame_mastery/features/coach/data/coach_development_focus_detector.dart';
 import 'package:endgame_mastery/features/coach/data/coach_engine_analyzer.dart';
 import 'package:endgame_mastery/features/coach/domain/coach_analysis_plan.dart';
-import 'package:endgame_mastery/features/coach/domain/coach_development_focus.dart';
 import 'package:flutter/material.dart';
 
 class CoachDevelopmentFocusPanel extends StatelessWidget {

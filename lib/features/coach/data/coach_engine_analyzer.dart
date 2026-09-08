@@ -1,5 +1,3 @@
-import 'dart:math' as math;
-
 import 'package:chess/chess.dart' as chess_lib;
 import 'package:endgame_mastery/core/engine/engine_config.dart';
 import 'package:endgame_mastery/core/engine/engine_position_analysis.dart';
@@ -98,7 +96,7 @@ class CoachEngineAnalyzer {
     if (beforeScore == null || before.mateIn != null) return null;
 
     if (terminalDraw) {
-      return math.max(0, beforeScore);
+      return beforeScore < 0 ? 0 : beforeScore;
     }
 
     final afterScore = after?.scoreCp;
@@ -108,7 +106,8 @@ class CoachEngineAnalyzer {
     // the opponent is to move, so its score must be negated to express
     // the resulting position from the original mover's perspective.
     final moverScoreAfter = -afterScore;
-    return math.max(0, beforeScore - moverScoreAfter);
+    final loss = beforeScore - moverScoreAfter;
+    return loss < 0 ? 0 : loss;
   }
 
   EngineImpactLevel _impact({

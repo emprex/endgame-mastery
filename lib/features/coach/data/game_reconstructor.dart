@@ -6,7 +6,10 @@ class GameReconstructor {
   const GameReconstructor();
 
   List<ReconstructedMove> reconstruct(CoachGame game) {
-    final board = chess_lib.Chess();
+    final setupFen = game.headers['SetUp'] == '1' ? game.headers['FEN'] : null;
+    final board = setupFen == null
+        ? chess_lib.Chess()
+        : chess_lib.Chess.fromFEN(setupFen);
     final reconstructed = <ReconstructedMove>[];
 
     for (var index = 0; index < game.moves.length; index++) {
@@ -20,10 +23,15 @@ class GameReconstructor {
         );
       }
 
+      final playedMove = board.history.last.move;
+      final promotion = _promotionSuffix(playedMove.promotion);
+      final uci = '${playedMove.fromAlgebraic}${playedMove.toAlgebraic}$promotion';
+
       reconstructed.add(
         ReconstructedMove(
           ply: index + 1,
           san: san,
+          uci: uci,
           fenBefore: fenBefore,
           fenAfter: board.fen,
         ),
@@ -31,5 +39,13 @@ class GameReconstructor {
     }
 
     return List.unmodifiable(reconstructed);
+  }
+
+  String _promotionSuffix(chess_lib.PieceType? promotion) {
+    if (promotion == chess_lib.PieceType.QUEEN) return 'q';
+    if (promotion == chess_lib.PieceType.ROOK) return 'r';
+    if (promotion == chess_lib.PieceType.BISHOP) return 'b';
+    if (promotion == chess_lib.PieceType.KNIGHT) return 'n';
+    return '';
   }
 }

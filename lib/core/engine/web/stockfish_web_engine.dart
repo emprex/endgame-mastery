@@ -5,8 +5,11 @@ import 'package:endgame_mastery/core/engine/chess_engine.dart';
 import 'package:endgame_mastery/core/engine/engine_config.dart';
 import 'package:endgame_mastery/core/engine/engine_exception.dart';
 import 'package:endgame_mastery/core/engine/engine_move.dart';
+import 'package:endgame_mastery/core/engine/engine_position_analysis.dart';
+import 'package:endgame_mastery/core/engine/position_analysis_engine.dart';
 import 'package:endgame_mastery/core/engine/uci/uci_best_move_parser.dart';
 import 'package:endgame_mastery/core/engine/uci/uci_command_builder.dart';
+import 'package:endgame_mastery/core/engine/uci/uci_info_parser.dart';
 import 'package:web/web.dart' as web;
 
 /// Web implementation of [ChessEngine] backed by
@@ -24,7 +27,7 @@ import 'package:web/web.dart' as web;
 /// and its companion WebAssembly binary is:
 ///
 /// stockfish/stockfish-18-lite-single.wasm
-class StockfishWebEngine implements ChessEngine {
+class StockfishWebEngine implements ChessEngine, PositionAnalysisEngine {
   web.Worker? _worker;
 
   StreamController<String>? _outputController;
@@ -289,6 +292,64 @@ class StockfishWebEngine implements ChessEngine {
       _outputSubscription = null;
 
       _activeSearch = null;
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // POSITION ANALYSIS
+  // ---------------------------------------------------------------------------
+
+  @override
+  Future<EnginePositionAnalysis> analyzePosition({
+    required String fen,
+    required EngineConfig config,
+  }) async {
+    _ensureNotDisposed();
+
+    if (!_initialized) {
+      throw const EngineInitializationException(
+        'Stockfish Web engine has not been initialized.',
+      );
+    }
+
+    final output = _outputController;
+    if (output == null) {
+      throw const EngineInitializationException(
+        'Stockfish output stream does not exist.',
+      );
+    }
+
+    UciInfo? latestInfo;
+
+    final infoSubscription = output.stream.listen((line) {
+      final info = UciInfoParser.parse(line);
+      if (info == null || (info.scoreCp == null && info.mateIn == null)) {
+        return;
+      }
+
+      final currentDepth = latestInfo?.depth ?? -1;
+      final newDepth = info.depth ?? -1;
+      if (latestInfo == null || newDepth >= currentDepth) {
+        latestInfo = info;
+      }
+    });
+
+    try {
+      final move = await bestMove(
+        fen: fen,
+        config: config,
+      );
+      final info = latestInfo;
+
+      return EnginePositionAnalysis(
+        bestMove: move,
+        depth: info?.depth,
+        scoreCp: info?.scoreCp,
+        mateIn: info?.mateIn,
+        principalVariation: info?.principalVariation ?? const [],
+      );
+    } finally {
+      await infoSubscription.cancel();
     }
   }
 

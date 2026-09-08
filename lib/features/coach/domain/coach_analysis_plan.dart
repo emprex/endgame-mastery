@@ -1,4 +1,5 @@
 import 'package:endgame_mastery/features/coach/domain/coach_game.dart';
+import 'package:endgame_mastery/features/coach/domain/reconstructed_move.dart';
 
 enum CoachingAxis {
   openingUnderstanding,
@@ -24,11 +25,13 @@ class CoachAnalysisStep {
 class CoachAnalysisPlan {
   const CoachAnalysisPlan({
     required this.game,
+    required this.reconstructedMoves,
     required this.steps,
     required this.axes,
   });
 
   final CoachGame game;
+  final List<ReconstructedMove> reconstructedMoves;
   final List<CoachAnalysisStep> steps;
   final List<CoachingAxis> axes;
 }
@@ -36,9 +39,13 @@ class CoachAnalysisPlan {
 class CoachAnalysisPlanner {
   const CoachAnalysisPlanner();
 
-  CoachAnalysisPlan build(CoachGame game) {
+  CoachAnalysisPlan build({
+    required CoachGame game,
+    required List<ReconstructedMove> reconstructedMoves,
+  }) {
     return CoachAnalysisPlan(
       game: game,
+      reconstructedMoves: reconstructedMoves,
       steps: const [
         CoachAnalysisStep(
           title: 'Reconstruct the game',

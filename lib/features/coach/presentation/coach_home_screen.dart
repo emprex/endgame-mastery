@@ -7,6 +7,7 @@ import 'package:endgame_mastery/features/coach/data/pgn_game_parser.dart';
 import 'package:endgame_mastery/features/coach/domain/coach_analysis_plan.dart';
 import 'package:endgame_mastery/features/coach/domain/coach_move_engine_analysis.dart';
 import 'package:endgame_mastery/features/coach/domain/coach_training_prompt.dart';
+import 'package:endgame_mastery/features/coach/presentation/coach_development_focus_panel.dart';
 import 'package:endgame_mastery/features/lessons/presentation/lessons_screen.dart';
 import 'package:flutter/material.dart';
 
@@ -193,6 +194,8 @@ class _CoachHomeScreenState extends State<CoachHomeScreen> {
                   const SizedBox(height: 28),
                   _EngineSummaryCard(result: engineResult),
                   const SizedBox(height: 24),
+                  CoachDevelopmentFocusPanel(result: engineResult),
+                  const SizedBox(height: 28),
                   Text(
                     'Critical decisions',
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(

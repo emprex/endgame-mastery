@@ -1,6 +1,5 @@
 import 'package:endgame_mastery/app/endgame_mastery_app.dart';
 import 'package:endgame_mastery/core/chess/chess_controller.dart';
-import 'package:endgame_mastery/features/lessons/data/curriculum.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -12,23 +11,44 @@ void main() {
 
   const insufficientMaterialFen = '8/8/8/8/8/2k5/8/2K5 w - - 0 1';
 
-  testWidgets('Endgame Mastery opens the curriculum home', (
+  testWidgets('Chess Coach opens the PGN analysis home', (
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(const EndgameMasteryApp());
 
     await tester.pumpAndSettle();
 
-    expect(find.text('Endgame Mastery'), findsOneWidget);
+    expect(find.text('Chess Coach'), findsOneWidget);
+    expect(find.text('Paste your game'), findsOneWidget);
+    expect(find.text('Analyze Game'), findsOneWidget);
+  });
 
-    expect(
-      find.text('${curriculum.length} verified lessons available'),
-      findsOneWidget,
+  testWidgets('a pasted PGN is imported for analysis', (
+    WidgetTester tester,
+  ) async {
+    const pgn = '''
+[White "WhitePlayer"]
+[Black "BlackPlayer"]
+[Result "1-0"]
+
+1. e4 e5 2. Nf3 Nc6 1-0
+''';
+
+    await tester.pumpWidget(const EndgameMasteryApp());
+    await tester.pumpAndSettle();
+
+    await tester.enterText(
+      find.byKey(const ValueKey<String>('coach-pgn-input')),
+      pgn,
     );
 
-    expect(find.text('CONTINUE LEARNING'), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey<String>('coach-analyze-button')));
+    await tester.pumpAndSettle();
 
-    expect(find.text('Pawn Endgames'), findsOneWidget);
+    expect(find.text('Game imported'), findsOneWidget);
+    expect(find.text('WhitePlayer vs BlackPlayer'), findsOneWidget);
+    expect(find.text('2 moves'), findsOneWidget);
+    expect(find.text('Ready for full analysis.'), findsOneWidget);
   });
 
   test('Dvoretsky position loads correctly', () {

@@ -1,5 +1,5 @@
 name: endgame_mastery
-description: "Endgame Mastery interactive chess endgame trainer."
+description: "Chess coaching app for full-game analysis and player development."
 publish_to: 'none'
 
 version: 1.0.0+1

@@ -1,4 +1,4 @@
-import 'package:endgame_mastery/features/lessons/presentation/lessons_screen.dart';
+import 'package:endgame_mastery/features/coach/presentation/coach_home_screen.dart';
 import 'package:flutter/material.dart';
 
 class EndgameMasteryApp extends StatelessWidget {
@@ -8,13 +8,13 @@ class EndgameMasteryApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Endgame Mastery',
+      title: 'Chess Coach',
       theme: ThemeData(
         brightness: Brightness.dark,
         useMaterial3: true,
         scaffoldBackgroundColor: const Color(0xFF171717),
       ),
-      home: const LessonsScreen(),
+      home: const CoachHomeScreen(),
     );
   }
 }

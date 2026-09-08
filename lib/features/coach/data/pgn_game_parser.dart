@@ -22,13 +22,14 @@ class PgnGameParser {
       if (match != null) {
         headers[match.group(1)!] = match.group(2)!;
       } else if (trimmed.isNotEmpty) {
-        moveLines.add(trimmed);
+        moveLines.add(
+          trimmed.replaceFirst(RegExp(r';.*$'), ''),
+        );
       }
     }
 
     var movetext = moveLines.join(' ');
     movetext = _removeBraceComments(movetext);
-    movetext = movetext.replaceAll(RegExp(r';[^\r\n]*'), ' ');
     movetext = _removeVariations(movetext);
     movetext = movetext.replaceAll(RegExp(r'\$\d+'), ' ');
     movetext = movetext.replaceAll(RegExp(r'\d+\.(?:\.\.)?'), ' ');
@@ -37,11 +38,11 @@ class PgnGameParser {
     final moves = <String>[];
 
     for (final token in movetext.split(RegExp(r'\s+'))) {
-      final move = token.trim();
-      if (move.isEmpty || results.contains(move)) {
+      final normalized = token.trim().replaceFirst(RegExp(r'[!?]+$'), '');
+      if (normalized.isEmpty || results.contains(normalized)) {
         continue;
       }
-      moves.add(move);
+      moves.add(normalized);
     }
 
     if (moves.isEmpty) {

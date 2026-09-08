@@ -4,12 +4,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  testWidgets('home derives lesson availability from curriculum', (
+  Future<void> openTrainingLibrary(WidgetTester tester) async {
+    await tester.pumpWidget(const EndgameMasteryApp());
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Training'));
+    await tester.pumpAndSettle();
+  }
+
+  testWidgets('training library derives lesson availability from curriculum', (
     WidgetTester tester,
   ) async {
-    await tester.pumpWidget(const EndgameMasteryApp());
-
-    await tester.pumpAndSettle();
+    await openTrainingLibrary(tester);
 
     expect(
       find.byKey(const ValueKey<String>('available-lesson-count')),
@@ -29,12 +35,10 @@ void main() {
     }
   });
 
-  testWidgets('home exposes a continue learning entry point', (
+  testWidgets('training library exposes a continue learning entry point', (
     WidgetTester tester,
   ) async {
-    await tester.pumpWidget(const EndgameMasteryApp());
-
-    await tester.pumpAndSettle();
+    await openTrainingLibrary(tester);
 
     expect(
       find.byKey(const ValueKey<String>('continue-learning-card')),

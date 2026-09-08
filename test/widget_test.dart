@@ -1,6 +1,5 @@
 import 'package:endgame_mastery/app/endgame_mastery_app.dart';
 import 'package:endgame_mastery/core/chess/chess_controller.dart';
-import 'package:endgame_mastery/features/lessons/data/curriculum.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -12,23 +11,20 @@ void main() {
 
   const insufficientMaterialFen = '8/8/8/8/8/2k5/8/2K5 w - - 0 1';
 
-  testWidgets('Endgame Mastery opens the curriculum home', (
+  testWidgets('Chess Coach opens the paste-first home', (
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(const EndgameMasteryApp());
 
     await tester.pumpAndSettle();
 
-    expect(find.text('Endgame Mastery'), findsOneWidget);
-
+    expect(find.text('Chess Coach'), findsOneWidget);
     expect(
-      find.text('${curriculum.length} verified lessons available'),
+      find.text('Paste a game. Understand your decisions.'),
       findsOneWidget,
     );
-
-    expect(find.text('CONTINUE LEARNING'), findsOneWidget);
-
-    expect(find.text('Pawn Endgames'), findsOneWidget);
+    expect(find.text('ANALYZE MY GAME'), findsOneWidget);
+    expect(find.text('Training'), findsOneWidget);
   });
 
   test('Dvoretsky position loads correctly', () {

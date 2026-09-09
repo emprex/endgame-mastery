@@ -3,12 +3,18 @@ import 'package:endgame_mastery/core/engine/engine_position_analysis.dart';
 
 /// Engine capability used for post-game analysis.
 ///
-/// This is intentionally separate from [ChessEngine]'s gameplay contract.
-/// Interactive opponent play and post-game evaluation have different callers
-/// and must not be coupled at the application layer.
+/// This lifecycle is deliberately separate from the interactive board caller.
+/// Implementations may reuse the same Stockfish adapter internally, but coach
+/// orchestration must depend only on this contract.
 abstract interface class PositionAnalysisEngine {
+  Future<void> initialize();
+
   Future<EnginePositionAnalysis> analyzePosition({
     required String fen,
     required EngineConfig config,
   });
+
+  Future<void> stop();
+
+  Future<void> dispose();
 }

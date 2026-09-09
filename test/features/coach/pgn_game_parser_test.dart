@@ -1,4 +1,5 @@
 import 'package:endgame_mastery/features/coach/application/pgn_game_parser.dart';
+import 'package:endgame_mastery/features/coach/domain/game_position.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -26,6 +27,32 @@ void main() {
     expect(game.moves, <String>['e4', 'e5', 'Nf3', 'Nc6', 'Bb5', 'a6']);
     expect(game.plyCount, 6);
     expect(game.fullMoveCount, 3);
+    expect(game.analysisPositionCount, 6);
+  });
+
+  test('builds an exact FEN timeline for every half-move', () {
+    final game = parser.parse(pgn);
+
+    expect(game.positions, hasLength(6));
+
+    final first = game.positions.first;
+    expect(first.ply, 1);
+    expect(first.moveNumber, 1);
+    expect(first.side, CoachGameSide.white);
+    expect(first.san, 'e4');
+    expect(first.moveLabel, '1. e4');
+    expect(first.fenBefore, game.initialFen);
+    expect(first.fenAfter, isNot(first.fenBefore));
+
+    final second = game.positions[1];
+    expect(second.ply, 2);
+    expect(second.moveNumber, 1);
+    expect(second.side, CoachGameSide.black);
+    expect(second.san, 'e5');
+    expect(second.moveLabel, '1... e5');
+    expect(second.fenBefore, first.fenAfter);
+
+    expect(game.positions.last.fenAfter, game.finalFen);
   });
 
   test('rejects empty PGN input', () {

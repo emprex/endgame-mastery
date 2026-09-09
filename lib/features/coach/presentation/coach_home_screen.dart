@@ -260,6 +260,14 @@ class _ImportedGameCard extends StatelessWidget {
                 fontWeight: FontWeight.w700,
               ),
             ),
+            const SizedBox(height: 6),
+            Text(
+              '${game.analysisPositionCount} positions prepared for engine analysis.',
+              key: const ValueKey<String>('coach-analysis-position-count'),
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: muted,
+              ),
+            ),
           ],
         ),
       ),
